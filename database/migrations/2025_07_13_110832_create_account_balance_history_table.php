@@ -21,6 +21,9 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['account_id', 'date']);
+
+            // Index for efficient date range queries
+            $table->index(['account_id', 'date']);
         });
     }
 

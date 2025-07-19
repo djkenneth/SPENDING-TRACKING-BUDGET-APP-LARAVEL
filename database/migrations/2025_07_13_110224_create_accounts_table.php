@@ -28,6 +28,11 @@ return new class extends Migration
             $table->boolean('include_in_net_worth')->default(true);
             $table->timestamps();
             $table->softDeletes();
+
+            // Indexes for performance
+            $table->index(['user_id', 'is_active']);
+            $table->index(['user_id', 'type']);
+            $table->index(['user_id', 'include_in_net_worth']);
         });
     }
 

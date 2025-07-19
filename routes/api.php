@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
@@ -71,6 +72,34 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function () {
     // Data Management
     Route::get('export-data', [UserController::class, 'exportData']);
     Route::delete('delete-account', [UserController::class, 'deleteAccount']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Account Management Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('accounts')->group(function () {
+    // Basic CRUD Operations
+    Route::get('/', [AccountController::class, 'index']); // GET /api/accounts
+    Route::post('/', [AccountController::class, 'store']); // POST /api/accounts
+    Route::get('/{account}', [AccountController::class, 'show']); // GET /api/accounts/{id}
+    Route::put('/{account}', [AccountController::class, 'update']); // PUT /api/accounts/{id}
+    Route::delete('/{account}', [AccountController::class, 'destroy']); // DELETE /api/accounts/{id}
+
+    // Account Transactions
+    Route::get('/{account}/transactions', [AccountController::class, 'transactions']); // GET /api/accounts/{id}/transactions
+    Route::get('/{account}/balance-history', [AccountController::class, 'balanceHistory']); // GET /api/accounts/{id}/balance-history
+
+    // Account Operations
+    Route::post('/{account}/adjust-balance', [AccountController::class, 'adjustBalance']); // POST /api/accounts/{id}/adjust-balance
+    Route::post('/transfer', [AccountController::class, 'transfer']); // POST /api/accounts/transfer
+
+    // Utility Endpoints
+    Route::get('/meta/types', [AccountController::class, 'getAccountTypes']); // GET /api/accounts/meta/types
+    Route::get('/summary/overview', [AccountController::class, 'getSummary']); // GET /api/accounts/summary/overview
+    Route::put('/bulk/update', [AccountController::class, 'bulkUpdate']); // PUT /api/accounts/bulk/update
 });
 
 /*
