@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\CategoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -131,6 +132,40 @@ Route::middleware('auth:sanctum')->prefix('transactions')->group(function () {
 
     // Statistics and Analytics
     Route::get('/statistics/summary', [TransactionController::class, 'statistics']); // GET /api/transactions/statistics/summary
+});
+
+/*
+|--------------------------------------------------------------------------
+| Category Management Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('categories')->group(function () {
+    // Basic CRUD Operations
+    Route::get('/', [CategoryController::class, 'index']); // GET /api/categories
+    Route::post('/', [CategoryController::class, 'store']); // POST /api/categories
+    Route::get('/{category}', [CategoryController::class, 'show']); // GET /api/categories/{id}
+    Route::put('/{category}', [CategoryController::class, 'update']); // PUT /api/categories/{id}
+    Route::delete('/{category}', [CategoryController::class, 'destroy']); // DELETE /api/categories/{id}
+
+    // Category Transactions
+    Route::get('/{category}/transactions', [CategoryController::class, 'transactions']); // GET /api/categories/{id}/transactions
+
+    // Analytics and Reports
+    Route::get('/analytics/spending-analysis', [CategoryController::class, 'spendingAnalysis']); // GET /api/categories/analytics/spending-analysis
+    Route::get('/analytics/trends', [CategoryController::class, 'trends']); // GET /api/categories/analytics/trends
+
+    // Bulk Operations
+    Route::put('/bulk/update', [CategoryController::class, 'bulkUpdate']); // PUT /api/categories/bulk/update
+    Route::put('/bulk/reorder', [CategoryController::class, 'reorder']); // PUT /api/categories/bulk/reorder
+
+    // Category Management
+    Route::post('/merge', [CategoryController::class, 'merge']); // POST /api/categories/merge
+
+    // Utility Endpoints
+    Route::get('/meta/icons-and-colors', [CategoryController::class, 'getIconsAndColors']); // GET /api/categories/meta/icons-and-colors
+    Route::get('/meta/defaults', [CategoryController::class, 'getDefaults']); // GET /api/categories/meta/defaults
+    Route::post('/meta/create-defaults', [CategoryController::class, 'createDefaults']); // POST /api/categories/meta/create-defaults
 });
 
 
