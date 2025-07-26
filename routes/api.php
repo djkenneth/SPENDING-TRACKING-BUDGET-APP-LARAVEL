@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\TransactionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -101,6 +102,37 @@ Route::middleware('auth:sanctum')->prefix('accounts')->group(function () {
     Route::get('/summary/overview', [AccountController::class, 'getSummary']); // GET /api/accounts/summary/overview
     Route::put('/bulk/update', [AccountController::class, 'bulkUpdate']); // PUT /api/accounts/bulk/update
 });
+
+/*
+|--------------------------------------------------------------------------
+| Transaction Management Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('transactions')->group(function () {
+    // Basic CRUD Operations
+    Route::get('/', [TransactionController::class, 'index']); // GET /api/transactions
+    Route::post('/', [TransactionController::class, 'store']); // POST /api/transactions
+    Route::get('/{transaction}', [TransactionController::class, 'show']); // GET /api/transactions/{id}
+    Route::put('/{transaction}', [TransactionController::class, 'update']); // PUT /api/transactions/{id}
+    Route::delete('/{transaction}', [TransactionController::class, 'destroy']); // DELETE /api/transactions/{id}
+
+    // Bulk Operations
+    Route::post('/bulk', [TransactionController::class, 'bulkCreate']); // POST /api/transactions/bulk
+    Route::delete('/bulk', [TransactionController::class, 'bulkDelete']); // DELETE /api/transactions/bulk
+
+    // Search and Filter
+    Route::get('/search/query', [TransactionController::class, 'search']); // GET /api/transactions/search/query
+    Route::get('/recent/list', [TransactionController::class, 'recent']); // GET /api/transactions/recent/list
+
+    // Import/Export
+    Route::post('/import/csv', [TransactionController::class, 'import']); // POST /api/transactions/import/csv
+    Route::get('/export/data', [TransactionController::class, 'export']); // GET /api/transactions/export/data
+
+    // Statistics and Analytics
+    Route::get('/statistics/summary', [TransactionController::class, 'statistics']); // GET /api/transactions/statistics/summary
+});
+
 
 /*
 |--------------------------------------------------------------------------
