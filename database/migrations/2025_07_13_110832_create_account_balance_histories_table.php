@@ -11,19 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('account_balance_history', function (Blueprint $table) {
+        Schema::create('account_balance_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('account_id')->constrained()->onDelete('cascade');
             $table->decimal('balance', 15, 2);
             $table->date('date');
-            $table->string('change_type'); // transaction, adjustment, sync
+            $table->string('change_type')->nullable(); // transaction, adjustment, sync, initial
             $table->decimal('change_amount', 15, 2)->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
 
+            // Ensure unique date per account
             $table->unique(['account_id', 'date']);
 
-            // Index for efficient date range queries
+            // Indexes for better performance
             $table->index(['account_id', 'date']);
+            $table->index('date');
         });
     }
 
@@ -32,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('account_balance_history');
+        Schema::dropIfExists('account_balance_histories');
     }
 };

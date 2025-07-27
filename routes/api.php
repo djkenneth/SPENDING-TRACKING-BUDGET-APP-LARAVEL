@@ -83,11 +83,10 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function () {
 */
 
 Route::middleware('auth:sanctum')->prefix('accounts')->group(function () {
-    // Utility Endpoints (must come before parameterized routes)
-    Route::get('types', [AccountController::class, 'getAccountTypes']); // GET /api/accounts/types
-    Route::get('summary', [AccountController::class, 'getSummary']); // GET /api/accounts/summary
-    Route::post('transfer', [AccountController::class, 'transfer']); // POST /api/accounts/transfer
-    Route::put('bulk-update', [AccountController::class, 'bulkUpdate']); // PUT /api/accounts/bulk-update
+    // Utility Endpoints
+    Route::get('/types', [AccountController::class, 'getAccountTypes']); // GET /api/accounts/types
+    Route::get('/summary', [AccountController::class, 'getSummary']); // GET /api/accounts/summary
+    Route::put('/bulk/update', [AccountController::class, 'bulkUpdate']); // PUT /api/accounts/bulk/update
 
     // Basic CRUD Operations
     Route::get('/', [AccountController::class, 'index']); // GET /api/accounts
@@ -105,11 +104,6 @@ Route::middleware('auth:sanctum')->prefix('accounts')->group(function () {
     Route::post('/transfer', [AccountController::class, 'transfer']); // POST /api/accounts/transfer
     Route::get('/{account}/performance-metrics', [AccountController::class, 'getPerformanceMetrics']); // GET /api/accounts/{id}/performance-metrics
     Route::post('/{account}/sync-balance', [AccountController::class, 'syncBalance']); // POST /api/accounts/{id}/sync-balance
-
-    // Utility Endpoints
-    Route::get('/meta/types', [AccountController::class, 'getAccountTypes']); // GET /api/accounts/meta/types
-    Route::get('/summary/overview', [AccountController::class, 'getSummary']); // GET /api/accounts/summary/overview
-    Route::put('/bulk/update', [AccountController::class, 'bulkUpdate']); // PUT /api/accounts/bulk/update
 });
 
 /*
