@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -13,7 +14,7 @@ class AccountService
     /**
      * Record balance history for an account
      */
-    public function recordBalanceHistory(Account $account, float $balance, string $changeType, float $changeAmount = null): void
+    public function recordBalanceHistory(Account $account, float $balance, string $changeType, ?float $changeAmount = null): void
     {
         $account->balanceHistory()->updateOrCreate(
             [
@@ -119,6 +120,8 @@ class AccountService
                     'balance' => $record->balance,
                     'change_amount' => $record->change_amount,
                     'change_type' => $record->change_type,
+                    'formatted_balance' => $this->formatAmount($account, $record->balance),
+                    'formatted_change' => $record->change_amount ? $this->formatAmount($account, $record->change_amount) : null,
                 ];
             } else {
                 $filledHistory[] = [
@@ -126,6 +129,8 @@ class AccountService
                     'balance' => $lastBalance,
                     'change_amount' => 0,
                     'change_type' => null,
+                    'formatted_balance' => $this->formatAmount($account, $lastBalance),
+                    'formatted_change' => null,
                 ];
             }
 
@@ -248,8 +253,98 @@ class AccountService
 
         return [
             'transfer_id' => $fromTransaction->id,
-            'from_transaction' => $fromTransaction,
-            'to_transaction' => $toTransaction,
+            'from_transaction' => $fromTransaction->load(['account', 'category', 'transferAccount']),
+            'to_transaction' => $toTransaction->load(['account', 'category', 'transferAccount']),
+        ];
+    }
+
+    /**
+     * Sync account balance with actual balance
+     */
+    public function syncAccountBalance(Account $account, float $actualBalance, string $reason = 'Manual sync'): void
+    {
+        $oldBalance = $account->balance;
+        $difference = $actualBalance - $oldBalance;
+
+        if (abs($difference) > 0.01) { // Only sync if difference is significant
+            $account->update(['balance' => $actualBalance]);
+
+            // Record balance history
+            $this->recordBalanceHistory($account, $actualBalance, 'sync', $difference);
+
+            // Create adjustment transaction if needed
+            if (abs($difference) > 0.01) {
+                $this->createBalanceAdjustmentTransaction($account, $difference, $reason);
+            }
+        }
+    }
+
+    /**
+     * Calculate account performance metrics
+     */
+    public function getAccountPerformanceMetrics(Account $account, int $months = 6): array
+    {
+        $startDate = now()->subMonths($months)->startOfMonth();
+        $endDate = now()->endOfMonth();
+
+        $transactions = $account->transactions()
+            ->whereBetween('date', [$startDate, $endDate])
+            ->orderBy('date')
+            ->get();
+
+        $monthlyData = [];
+        $current = $startDate->copy();
+
+        while ($current->lte($endDate)) {
+            $monthKey = $current->format('Y-m');
+            $monthStart = $current->copy()->startOfMonth();
+            $monthEnd = $current->copy()->endOfMonth();
+
+            $monthTransactions = $transactions->filter(function ($transaction) use ($monthStart, $monthEnd) {
+                return $transaction->date->between($monthStart, $monthEnd);
+            });
+
+            $income = $monthTransactions->where('type', 'income')->sum('amount');
+            $expenses = $monthTransactions->where('type', 'expense')->sum('amount');
+            $transfers = $monthTransactions->where('type', 'transfer')->sum('amount');
+
+            $monthlyData[$monthKey] = [
+                'month' => $current->format('M Y'),
+                'income' => $income,
+                'expenses' => $expenses,
+                'transfers' => $transfers,
+                'net' => $income - $expenses,
+                'transaction_count' => $monthTransactions->count(),
+                'formatted_income' => $this->formatAmount($account, $income),
+                'formatted_expenses' => $this->formatAmount($account, $expenses),
+                'formatted_net' => $this->formatAmount($account, $income - $expenses),
+            ];
+
+            $current->addMonth();
+        }
+
+        // Calculate trends
+        $values = array_values($monthlyData);
+        $netAmounts = array_column($values, 'net');
+        $trend = $this->calculateTrend($netAmounts);
+
+        return [
+            'period' => "{$months} months",
+            'date_range' => [
+                'start' => $startDate->format('Y-m-d'),
+                'end' => $endDate->format('Y-m-d'),
+            ],
+            'monthly_data' => array_values($monthlyData),
+            'trend' => $trend,
+            'total_income' => array_sum(array_column($values, 'income')),
+            'total_expenses' => array_sum(array_column($values, 'expenses')),
+            'total_net' => array_sum(array_column($values, 'net')),
+            'average_monthly_net' => count($values) > 0 ? array_sum(array_column($values, 'net')) / count($values) : 0,
+            'formatted_totals' => [
+                'income' => $this->formatAmount($account, array_sum(array_column($values, 'income'))),
+                'expenses' => $this->formatAmount($account, array_sum(array_column($values, 'expenses'))),
+                'net' => $this->formatAmount($account, array_sum(array_column($values, 'net'))),
+            ],
         ];
     }
 
@@ -276,6 +371,66 @@ class AccountService
                 // For other accounts, money coming in increases the balance
                 $account->increment('balance', $amount);
             }
+        }
+    }
+
+    /**
+     * Create balance adjustment transaction
+     */
+    private function createBalanceAdjustmentTransaction(Account $account, float $adjustment, string $reason): void
+    {
+        $user = $account->user;
+
+        // Find or create adjustment category
+        $adjustmentCategory = $user->categories()
+            ->where('name', 'Balance Adjustment')
+            ->first();
+
+        if (!$adjustmentCategory) {
+            $adjustmentCategory = $user->categories()->create([
+                'name' => 'Balance Adjustment',
+                'type' => $adjustment > 0 ? 'income' : 'expense',
+                'color' => '#757575',
+                'icon' => 'tune',
+            ]);
+        }
+
+        $user->transactions()->create([
+            'account_id' => $account->id,
+            'category_id' => $adjustmentCategory->id,
+            'description' => 'Balance Adjustment: ' . $reason,
+            'amount' => abs($adjustment),
+            'type' => $adjustment > 0 ? 'income' : 'expense',
+            'date' => now()->format('Y-m-d'),
+            'notes' => "Account balance adjusted by {$user->getCurrencySymbol()}" . number_format($adjustment, 2),
+            'is_cleared' => true,
+            'cleared_at' => now(),
+        ]);
+    }
+
+    /**
+     * Calculate trend from array of values
+     */
+    private function calculateTrend(array $values): string
+    {
+        if (count($values) < 2) {
+            return 'stable';
+        }
+
+        $first = array_slice($values, 0, ceil(count($values) / 2));
+        $second = array_slice($values, floor(count($values) / 2));
+
+        $firstAvg = array_sum($first) / count($first);
+        $secondAvg = array_sum($second) / count($second);
+
+        $percentChange = $firstAvg != 0 ? (($secondAvg - $firstAvg) / abs($firstAvg)) * 100 : 0;
+
+        if ($percentChange > 10) {
+            return 'increasing';
+        } elseif ($percentChange < -10) {
+            return 'decreasing';
+        } else {
+            return 'stable';
         }
     }
 
@@ -316,139 +471,15 @@ class AccountService
     }
 
     /**
-     * Sync account balance with actual balance
+     * Format amount with currency symbol
      */
-    public function syncAccountBalance(Account $account, float $actualBalance, string $reason = 'Manual sync'): void
+    private function formatAmount(Account $account, float $amount): string
     {
-        $oldBalance = $account->balance;
-        $difference = $actualBalance - $oldBalance;
+        $currencies = config('user.currencies', []);
+        $currency = $account->currency ?? 'USD';
+        $symbol = $currencies[$currency]['symbol'] ?? $currency;
 
-        if (abs($difference) > 0.01) { // Only sync if difference is significant
-            $account->update(['balance' => $actualBalance]);
-
-            // Record balance history
-            $this->recordBalanceHistory($account, $actualBalance, 'sync', $difference);
-
-            // Create adjustment transaction if needed
-            if (abs($difference) > 0.01) {
-                $this->createBalanceAdjustmentTransaction($account, $difference, $reason);
-            }
-        }
-    }
-
-    /**
-     * Create balance adjustment transaction
-     */
-    private function createBalanceAdjustmentTransaction(Account $account, float $adjustment, string $reason): void
-    {
-        $user = $account->user;
-
-        // Find or create adjustment category
-        $adjustmentCategory = $user->categories()
-            ->where('name', 'Balance Adjustment')
-            ->first();
-
-        if (!$adjustmentCategory) {
-            $adjustmentCategory = $user->categories()->create([
-                'name' => 'Balance Adjustment',
-                'type' => $adjustment > 0 ? 'income' : 'expense',
-                'color' => '#757575',
-                'icon' => 'tune',
-            ]);
-        }
-
-        $user->transactions()->create([
-            'account_id' => $account->id,
-            'category_id' => $adjustmentCategory->id,
-            'description' => 'Balance Adjustment: ' . $reason,
-            'amount' => abs($adjustment),
-            'type' => $adjustment > 0 ? 'income' : 'expense',
-            'date' => now()->format('Y-m-d'),
-            'notes' => "Account balance adjusted by {$user->getCurrencySymbol()}" . number_format($adjustment, 2),
-            'is_cleared' => true,
-            'cleared_at' => now(),
-        ]);
-    }
-
-    /**
-     * Calculate account performance metrics
-     */
-    public function getAccountPerformanceMetrics(Account $account, int $months = 6): array
-    {
-        $startDate = now()->subMonths($months)->startOfMonth();
-        $endDate = now()->endOfMonth();
-
-        $transactions = $account->transactions()
-            ->whereBetween('date', [$startDate, $endDate])
-            ->orderBy('date')
-            ->get();
-
-        $monthlyData = [];
-        $current = $startDate->copy();
-
-        while ($current->lte($endDate)) {
-            $monthKey = $current->format('Y-m');
-            $monthStart = $current->copy()->startOfMonth();
-            $monthEnd = $current->copy()->endOfMonth();
-
-            $monthTransactions = $transactions->filter(function ($transaction) use ($monthStart, $monthEnd) {
-                return $transaction->date->between($monthStart, $monthEnd);
-            });
-
-            $income = $monthTransactions->where('type', 'income')->sum('amount');
-            $expenses = $monthTransactions->where('type', 'expense')->sum('amount');
-            $transfers = $monthTransactions->where('type', 'transfer')->sum('amount');
-
-            $monthlyData[$monthKey] = [
-                'month' => $current->format('M Y'),
-                'income' => $income,
-                'expenses' => $expenses,
-                'transfers' => $transfers,
-                'net' => $income - $expenses,
-                'transaction_count' => $monthTransactions->count(),
-            ];
-
-            $current->addMonth();
-        }
-
-        // Calculate trends
-        $values = array_values($monthlyData);
-        $netAmounts = array_column($values, 'net');
-        $trend = $this->calculateTrend($netAmounts);
-
-        return [
-            'monthly_data' => array_values($monthlyData),
-            'trend' => $trend,
-            'total_income' => array_sum(array_column($values, 'income')),
-            'total_expenses' => array_sum(array_column($values, 'expenses')),
-            'total_net' => array_sum(array_column($values, 'net')),
-            'average_monthly_net' => count($values) > 0 ? array_sum(array_column($values, 'net')) / count($values) : 0,
-        ];
-    }
-
-    /**
-     * Calculate trend from array of values
-     */
-    private function calculateTrend(array $values): string
-    {
-        if (count($values) < 2) {
-            return 'stable';
-        }
-
-        $first = array_slice($values, 0, ceil(count($values) / 2));
-        $second = array_slice($values, floor(count($values) / 2));
-
-        $firstAvg = array_sum($first) / count($first);
-        $secondAvg = array_sum($second) / count($second);
-
-        $percentChange = $firstAvg != 0 ? (($secondAvg - $firstAvg) / abs($firstAvg)) * 100 : 0;
-
-        if ($percentChange > 10) {
-            return 'increasing';
-        } elseif ($percentChange < -10) {
-            return 'decreasing';
-        } else {
-            return 'stable';
-        }
+        $prefix = $amount < 0 ? '-' : '';
+        return $prefix . $symbol . number_format(abs($amount), 2);
     }
 }

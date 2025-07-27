@@ -90,10 +90,25 @@ class TransferRequest extends FormRequest
                 }
             }
 
+            // Validate credit limit for credit card from account
+            if ($fromAccount && $fromAccount->type === 'credit_card') {
+                $transferAmount = (float) $this->input('amount');
+                $availableCredit = $fromAccount->credit_limit - abs($fromAccount->balance);
+
+                if ($transferAmount > $availableCredit) {
+                    $validator->errors()->add(
+                        'amount',
+                        'Transfer amount exceeds available credit in source account. Available: ' .
+                        $user->getCurrencySymbol() . number_format($availableCredit, 2)
+                    );
+                }
+            }
+
             // Validate credit limit for credit card destination
             if ($toAccount && $toAccount->type === 'credit_card') {
                 $transferAmount = (float) $this->input('amount');
-                $availableCredit = $toAccount->credit_limit - abs($toAccount->balance);
+                $currentBalance = abs($toAccount->balance);
+                $availableCredit = $toAccount->credit_limit - $currentBalance;
 
                 if ($transferAmount > $availableCredit) {
                     $validator->errors()->add(
@@ -112,6 +127,33 @@ class TransferRequest extends FormRequest
             if ($toAccount && !$toAccount->is_active) {
                 $validator->errors()->add('to_account_id', 'The destination account is not active.');
             }
+
+            // Validate currency compatibility (optional - add warning if different)
+            if ($fromAccount && $toAccount && $fromAccount->currency !== $toAccount->currency) {
+                // This could be a warning rather than an error
+                // For now, we'll allow it but you might want to add exchange rate handling
+            }
         });
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Set default date to today if not provided
+        if (!$this->has('date')) {
+            $this->merge(['date' => now()->format('Y-m-d')]);
+        }
+
+        // Clean up description
+        if ($this->has('description')) {
+            $this->merge(['description' => trim($this->input('description'))]);
+        }
+
+        // Clean up notes
+        if ($this->has('notes')) {
+            $this->merge(['notes' => trim($this->input('notes'))]);
+        }
     }
 }

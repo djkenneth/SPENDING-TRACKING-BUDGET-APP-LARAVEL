@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Account\CreateAccountRequest;
 use App\Http\Requests\Account\UpdateAccountRequest;
+use App\Http\Requests\Account\TransferRequest;
 use App\Http\Resources\AccountResource;
 use App\Http\Resources\AccountTransactionResource;
+use App\Http\Resources\AccountSummaryResource;
 use App\Models\Account;
 use App\Services\AccountService;
 use Illuminate\Http\Request;
@@ -67,16 +69,29 @@ class AccountController extends Controller
      */
     public function store(CreateAccountRequest $request): JsonResponse
     {
-        $account = $request->user()->accounts()->create($request->validated());
+        try {
+            DB::beginTransaction();
 
-        // Create initial balance history record
-        $this->accountService->recordBalanceHistory($account, $account->balance, 'initial', $account->balance);
+            $account = $request->user()->accounts()->create($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Account created successfully',
-            'data' => new AccountResource($account)
-        ], 201);
+            // Create initial balance history record
+            $this->accountService->recordBalanceHistory($account, $account->balance, 'initial', $account->balance);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account created successfully',
+                'data' => new AccountResource($account)
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Account creation failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -116,24 +131,37 @@ class AccountController extends Controller
             ], 404);
         }
 
-        $oldBalance = $account->balance;
-        $account->update($request->validated());
+        try {
+            DB::beginTransaction();
 
-        // Record balance change if balance was updated
-        if ($oldBalance != $account->balance) {
-            $this->accountService->recordBalanceHistory(
-                $account,
-                $account->balance,
-                'adjustment',
-                $account->balance - $oldBalance
-            );
+            $oldBalance = $account->balance;
+            $account->update($request->validated());
+
+            // Record balance change if balance was updated
+            if ($oldBalance != $account->balance) {
+                $this->accountService->recordBalanceHistory(
+                    $account,
+                    $account->balance,
+                    'adjustment',
+                    $account->balance - $oldBalance
+                );
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account updated successfully',
+                'data' => new AccountResource($account->fresh())
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Account update failed: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Account updated successfully',
-            'data' => new AccountResource($account->fresh())
-        ]);
     }
 
     /**
@@ -159,12 +187,25 @@ class AccountController extends Controller
             ], 400);
         }
 
-        $account->delete();
+        try {
+            DB::beginTransaction();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Account deleted successfully'
-        ]);
+            $account->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Account deletion failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -256,17 +297,8 @@ class AccountController extends Controller
     /**
      * Transfer money between accounts
      */
-    public function transfer(Request $request): JsonResponse
+    public function transfer(TransferRequest $request): JsonResponse
     {
-        $request->validate([
-            'from_account_id' => ['required', 'integer', 'exists:accounts,id'],
-            'to_account_id' => ['required', 'integer', 'exists:accounts,id', 'different:from_account_id'],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'description' => ['required', 'string', 'max:255'],
-            'date' => ['required', 'date'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
         $user = $request->user();
 
         // Ensure both accounts belong to user
@@ -278,14 +310,6 @@ class AccountController extends Controller
                 'success' => false,
                 'message' => 'One or both accounts not found'
             ], 404);
-        }
-
-        // Check if from account has sufficient balance (for non-credit accounts)
-        if ($fromAccount->type !== 'credit_card' && $fromAccount->balance < $request->amount) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Insufficient balance in source account'
-            ], 400);
         }
 
         try {
@@ -341,53 +365,17 @@ class AccountController extends Controller
             'reason' => ['required', 'string', 'max:255'],
         ]);
 
-        $oldBalance = $account->balance;
-        $newBalance = $request->balance;
-        $adjustment = $newBalance - $oldBalance;
-
         try {
             DB::beginTransaction();
 
-            // Update account balance
-            $account->update(['balance' => $newBalance]);
-
-            // Record balance history
-            $this->accountService->recordBalanceHistory($account, $newBalance, 'adjustment', $adjustment);
-
-            // Create adjustment transaction for tracking
-            $category = $account->user->categories()->where('name', 'Balance Adjustment')->first();
-            if (!$category) {
-                $category = $account->user->categories()->create([
-                    'name' => 'Balance Adjustment',
-                    'type' => $adjustment > 0 ? 'income' : 'expense',
-                    'color' => '#757575',
-                    'icon' => 'tune',
-                ]);
-            }
-
-            $transaction = $account->transactions()->create([
-                'user_id' => $account->user_id,
-                'category_id' => $category->id,
-                'description' => 'Balance Adjustment: ' . $request->reason,
-                'amount' => abs($adjustment),
-                'type' => $adjustment > 0 ? 'income' : 'expense',
-                'date' => now()->format('Y-m-d'),
-                'notes' => "Balance adjusted from {$account->user->getCurrencySymbol()}" . number_format($oldBalance, 2) .
-                          " to {$account->user->getCurrencySymbol()}" . number_format($newBalance, 2),
-            ]);
+            $this->accountService->syncAccountBalance($account, $request->balance, $request->reason);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Account balance adjusted successfully',
-                'data' => [
-                    'old_balance' => $oldBalance,
-                    'new_balance' => $newBalance,
-                    'adjustment' => $adjustment,
-                    'account' => new AccountResource($account->fresh()),
-                    'transaction' => new AccountTransactionResource($transaction),
-                ]
+                'data' => new AccountResource($account->fresh())
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -495,8 +483,90 @@ class AccountController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $summary
+            'data' => new AccountSummaryResource([
+                'total_accounts' => $summary['total_accounts'],
+                'total_balance' => $summary['total_balance'],
+                'net_worth' => $summary['net_worth'],
+                'accounts_by_type' => $summary['accounts_by_type'],
+                'currency' => $summary['currency'],
+                'currency_symbol' => $summary['currency_symbol'],
+                'credit_utilization' => $summary['credit_utilization'] ?? null,
+            ])
         ]);
+    }
+
+    /**
+     * Get account performance metrics
+     */
+    public function getPerformanceMetrics(Request $request, Account $account): JsonResponse
+    {
+        // Ensure account belongs to authenticated user
+        if ($account->user_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Account not found'
+            ], 404);
+        }
+
+        $request->validate([
+            'months' => ['nullable', 'integer', 'min:1', 'max:24'],
+        ]);
+
+        $months = $request->input('months', 6);
+        $metrics = $this->accountService->getAccountPerformanceMetrics($account, $months);
+
+        return response()->json([
+            'success' => true,
+            'data' => $metrics
+        ]);
+    }
+
+    /**
+     * Sync account balance with actual balance
+     */
+    public function syncBalance(Request $request, Account $account): JsonResponse
+    {
+        // Ensure account belongs to authenticated user
+        if ($account->user_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Account not found'
+            ], 404);
+        }
+
+        $request->validate([
+            'actual_balance' => ['required', 'numeric'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $oldBalance = $account->balance;
+            $reason = $request->input('reason', 'Balance sync');
+
+            $this->accountService->syncAccountBalance($account, $request->actual_balance, $reason);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account balance synced successfully',
+                'data' => [
+                    'old_balance' => $oldBalance,
+                    'new_balance' => $account->fresh()->balance,
+                    'difference' => $account->fresh()->balance - $oldBalance,
+                    'account' => new AccountResource($account->fresh()),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Balance sync failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
