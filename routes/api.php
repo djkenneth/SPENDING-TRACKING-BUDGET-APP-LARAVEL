@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\CategoryController;
@@ -168,6 +169,26 @@ Route::middleware('auth:sanctum')->prefix('categories')->group(function () {
     Route::get('/meta/icons-and-colors', [CategoryController::class, 'getIconsAndColors']); // GET /api/categories/meta/icons-and-colors
     Route::get('/meta/defaults', [CategoryController::class, 'getDefaults']); // GET /api/categories/meta/defaults
     Route::post('/meta/create-defaults', [CategoryController::class, 'createDefaults']); // POST /api/categories/meta/create-defaults
+});
+
+/*
+|--------------------------------------------------------------------------
+| Budget Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('budgets')->group(function () {
+    // Core CRUD Operations
+    Route::get('/', [BudgetController::class, 'index']); // GET /api/budgets
+    Route::post('/', [BudgetController::class, 'store']); // POST /api/budgets
+    Route::get('/{budget}', [BudgetController::class, 'show']); // GET /api/budgets/{id}
+    Route::put('/{budget}', [BudgetController::class, 'update']); // PUT /api/budgets/{id}
+    Route::delete('/{budget}', [BudgetController::class, 'destroy']); // DELETE /api/budgets/{id}
+
+    // Special Budget Endpoints
+    Route::get('/current/month', [BudgetController::class, 'current']); // GET /api/budgets/current/month
+    Route::get('/{budget}/analysis', [BudgetController::class, 'analysis']); // GET /api/budgets/{id}/analysis
+    Route::post('/{budget}/reset', [BudgetController::class, 'reset']); // POST /api/budgets/{id}/reset
 });
 
 
