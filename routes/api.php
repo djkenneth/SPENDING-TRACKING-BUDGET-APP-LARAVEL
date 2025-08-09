@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\DebtController;
 use App\Http\Controllers\Api\FinancialGoalController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -210,6 +211,34 @@ Route::middleware('auth:sanctum')->prefix('goals')->group(function () {
     Route::post('/{goal}/contribute', [FinancialGoalController::class, 'contribute']); // POST /api/goals/{id}/contribute
     Route::get('/{goal}/progress', [FinancialGoalController::class, 'progress']); // GET /api/goals/{id}/progress
     Route::post('/{goal}/complete', [FinancialGoalController::class, 'complete']); // POST /api/goals/{id}/complete
+});
+
+/*
+|--------------------------------------------------------------------------
+| Debt Management Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('debts')->group(function () {
+    // Utility Endpoints
+    Route::get('/types', [DebtController::class, 'getDebtTypes']); // GET /api/debts/types
+    Route::get('/summary', [DebtController::class, 'getSummary']); // GET /api/debts/summary
+    Route::post('/consolidation-options', [DebtController::class, 'getConsolidationOptions']); // POST /api/debts/consolidation-options
+
+    // Core CRUD Operations
+    Route::get('/', [DebtController::class, 'index']); // GET /api/debts
+    Route::post('/', [DebtController::class, 'store']); // POST /api/debts
+    Route::get('/{debt}', [DebtController::class, 'show']); // GET /api/debts/{id}
+    Route::put('/{debt}', [DebtController::class, 'update']); // PUT /api/debts/{id}
+    Route::delete('/{debt}', [DebtController::class, 'destroy']); // DELETE /api/debts/{id}
+
+    // Payment Management
+    Route::post('/{debt}/payment', [DebtController::class, 'recordPayment']); // POST /api/debts/{id}/payment
+    Route::get('/{debt}/payment-history', [DebtController::class, 'getPaymentHistory']); // GET /api/debts/{id}/payment-history
+    Route::get('/{debt}/payoff-schedule', [DebtController::class, 'getPayoffSchedule']); // GET /api/debts/{id}/payoff-schedule
+
+    // Debt Actions
+    Route::post('/{debt}/mark-paid-off', [DebtController::class, 'markAsPaidOff']); // POST /api/debts/{id}/mark-paid-off
 });
 
 /*
