@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BillController;
 use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TransactionController;
@@ -239,6 +240,36 @@ Route::middleware('auth:sanctum')->prefix('debts')->group(function () {
 
     // Debt Actions
     Route::post('/{debt}/mark-paid-off', [DebtController::class, 'markAsPaidOff']); // POST /api/debts/{id}/mark-paid-off
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Bills & Subscriptions Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('bills')->group(function () {
+    // Core CRUD Operations
+    Route::get('/', [BillController::class, 'index']); // GET /api/bills
+    Route::post('/', [BillController::class, 'store']); // POST /api/bills
+    Route::get('/{bill}', [BillController::class, 'show']); // GET /api/bills/{id}
+    Route::put('/{bill}', [BillController::class, 'update']); // PUT /api/bills/{id}
+    Route::delete('/{bill}', [BillController::class, 'destroy']); // DELETE /api/bills/{id}
+
+    // Bill Actions
+    Route::post('/{bill}/pay', [BillController::class, 'markAsPaid']); // POST /api/bills/{id}/pay
+    Route::post('/{bill}/duplicate', [BillController::class, 'duplicate']); // POST /api/bills/{id}/duplicate
+
+    // Bill Queries
+    Route::get('/status/upcoming', [BillController::class, 'getUpcomingBills']); // GET /api/bills/status/upcoming
+    Route::get('/status/overdue', [BillController::class, 'getOverdueBills']); // GET /api/bills/status/overdue
+
+    // Payment History
+    Route::get('/{bill}/payment-history', [BillController::class, 'getPaymentHistory']); // GET /api/bills/{id}/payment-history
+
+    // Statistics
+    Route::get('/analytics/statistics', [BillController::class, 'getStatistics']); // GET /api/bills/analytics/statistics
 });
 
 /*
