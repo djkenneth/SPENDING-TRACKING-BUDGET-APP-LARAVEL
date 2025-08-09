@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\FinancialGoalController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -191,6 +192,25 @@ Route::middleware('auth:sanctum')->prefix('budgets')->group(function () {
     Route::post('/{budget}/reset', [BudgetController::class, 'reset']); // POST /api/budgets/{id}/reset
 });
 
+/*
+|--------------------------------------------------------------------------
+| Financial Goals Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('goals')->group(function () {
+    // Core CRUD Operations
+    Route::get('/', [FinancialGoalController::class, 'index']); // GET /api/goals
+    Route::post('/', [FinancialGoalController::class, 'store']); // POST /api/goals
+    Route::get('/{goal}', [FinancialGoalController::class, 'show']); // GET /api/goals/{id}
+    Route::put('/{goal}', [FinancialGoalController::class, 'update']); // PUT /api/goals/{id}
+    Route::delete('/{goal}', [FinancialGoalController::class, 'destroy']); // DELETE /api/goals/{id}
+
+    // Goal Actions
+    Route::post('/{goal}/contribute', [FinancialGoalController::class, 'contribute']); // POST /api/goals/{id}/contribute
+    Route::get('/{goal}/progress', [FinancialGoalController::class, 'progress']); // GET /api/goals/{id}/progress
+    Route::post('/{goal}/complete', [FinancialGoalController::class, 'complete']); // POST /api/goals/{id}/complete
+});
 
 /*
 |--------------------------------------------------------------------------
