@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillController;
 use App\Http\Controllers\Api\BudgetController;
@@ -303,6 +304,40 @@ Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
 
     // Test Notification (for development/testing)
     Route::post('/test/send', [NotificationController::class, 'sendTestNotification']); // POST /api/notifications/test/send
+});
+
+/*
+|--------------------------------------------------------------------------
+| Analytics & Reports Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('analytics')->group(function () {
+    // Dashboard & Summaries
+    Route::get('/dashboard', [AnalyticsController::class, 'dashboard']); // GET /api/analytics/dashboard
+    Route::get('/monthly-summary', [AnalyticsController::class, 'monthlySummary']); // GET /api/analytics/monthly-summary
+    Route::get('/yearly-summary', [AnalyticsController::class, 'yearlySummary']); // GET /api/analytics/yearly-summary
+
+    // Financial Analysis
+    Route::get('/income-vs-expenses', [AnalyticsController::class, 'incomeVsExpenses']); // GET /api/analytics/income-vs-expenses
+    Route::get('/spending-trends', [AnalyticsController::class, 'spendingTrends']); // GET /api/analytics/spending-trends
+    Route::get('/category-breakdown', [AnalyticsController::class, 'categoryBreakdown']); // GET /api/analytics/category-breakdown
+    Route::get('/cash-flow', [AnalyticsController::class, 'cashFlow']); // GET /api/analytics/cash-flow
+
+    // Net Worth & Goals
+    Route::get('/net-worth', [AnalyticsController::class, 'netWorth']); // GET /api/analytics/net-worth
+    Route::get('/goal-progress', [AnalyticsController::class, 'goalProgress']); // GET /api/analytics/goal-progress
+
+    // Budget Analysis
+    Route::get('/budget-performance', [AnalyticsController::class, 'budgetPerformance']); // GET /api/analytics/budget-performance
+
+    // Advanced Analytics
+    Route::get('/predictions', [AnalyticsController::class, 'predictions']); // GET /api/analytics/predictions
+    Route::get('/health-score', [AnalyticsController::class, 'healthScore']); // GET /api/analytics/health-score
+    Route::get('/insights', [AnalyticsController::class, 'insights']); // GET /api/analytics/insights
+
+    // Custom Reports
+    Route::post('/custom-report', [AnalyticsController::class, 'customReport']); // POST /api/analytics/custom-report
 });
 
 /*
