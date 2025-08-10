@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DebtController;
 use App\Http\Controllers\Api\FinancialGoalController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -270,6 +271,38 @@ Route::middleware('auth:sanctum')->prefix('bills')->group(function () {
 
     // Statistics
     Route::get('/analytics/statistics', [BillController::class, 'getStatistics']); // GET /api/bills/analytics/statistics
+});
+
+/*
+|--------------------------------------------------------------------------
+| Notifications Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
+    // Core Operations
+    Route::get('/', [NotificationController::class, 'index']); // GET /api/notifications
+    Route::post('/', [NotificationController::class, 'store']); // POST /api/notifications
+    Route::get('/{notification}', [NotificationController::class, 'show']); // GET /api/notifications/{id}
+    Route::delete('/{notification}', [NotificationController::class, 'destroy']); // DELETE /api/notifications/{id}
+
+    // Mark as Read
+    Route::put('/{notification}/read', [NotificationController::class, 'markAsRead']); // PUT /api/notifications/{id}/read
+    Route::put('/read-all', [NotificationController::class, 'markAllAsRead']); // PUT /api/notifications/read-all
+
+    // Notification Info
+    Route::get('/status/unread-count', [NotificationController::class, 'getUnreadCount']); // GET /api/notifications/status/unread-count
+    Route::get('/analytics/statistics', [NotificationController::class, 'getStatistics']); // GET /api/notifications/analytics/statistics
+
+    // Settings
+    Route::get('/user/settings', [NotificationController::class, 'getSettings']); // GET /api/notifications/user/settings
+    Route::put('/user/settings', [NotificationController::class, 'updateSettings']); // PUT /api/notifications/user/settings
+
+    // Bulk Operations
+    Route::delete('/bulk/delete', [NotificationController::class, 'bulkDelete']); // DELETE /api/notifications/bulk/delete
+
+    // Test Notification (for development/testing)
+    Route::post('/test/send', [NotificationController::class, 'sendTestNotification']); // POST /api/notifications/test/send
 });
 
 /*
