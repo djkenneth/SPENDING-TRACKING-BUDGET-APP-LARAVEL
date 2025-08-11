@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'currency' => [
+        'provider' => env('CURRENCY_API_PROVIDER', 'exchangerate-api'),
+        'api_key' => env('CURRENCY_API_KEY'),
+        'api_url' => env('CURRENCY_API_URL'),
+    ],
+
 ];
