@@ -310,18 +310,18 @@ class CurrencyController extends Controller
             $amount = $request->input('amount');
             $fromCurrency = $request->input('from_currency');
             $toCurrency = $request->input('to_currency');
-            $date = $request->input('date', now()->format('Y-m-d'));
+            // $date = $request->input('date', now()->format('Y-m-d'));
 
-            $convertedAmount = ExchangeRate::convert($amount, $fromCurrency, $toCurrency, $date);
+            // $convertedAmount = ExchangeRate::convert($amount, $fromCurrency, $toCurrency, $date);
 
-            if ($convertedAmount === null) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Exchange rate not available for the specified currencies and date',
-                ], 404);
-            }
+            // if ($convertedAmount === null) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Exchange rate not available for the specified currencies and date',
+            //     ], 404);
+            // }
 
-            $rate = ExchangeRate::getRate($fromCurrency, $toCurrency, $date);
+            // $rate = ExchangeRate::getRate($fromCurrency, $toCurrency, $date);
 
             $currencies = config('user.currencies', []);
             $fromSymbol = $currencies[$fromCurrency]['symbol'] ?? $fromCurrency;
@@ -336,13 +336,13 @@ class CurrencyController extends Controller
                         'formatted' => $fromSymbol . ' ' . number_format($amount, 2),
                     ],
                     'converted' => [
-                        'amount' => round($convertedAmount, 2),
+                        // 'amount' => round($convertedAmount, 2),
                         'currency' => $toCurrency,
-                        'formatted' => $toSymbol . ' ' . number_format($convertedAmount, 2),
+                        // 'formatted' => $toSymbol . ' ' . number_format($convertedAmount, 2),
                     ],
-                    'rate' => $rate,
-                    'date' => $date,
-                    'calculation' => "{$amount} × {$rate} = {$convertedAmount}",
+                    // 'rate' => $rate,
+                    // 'date' => $date,
+                    // 'calculation' => "{$amount} × {$rate} = {$convertedAmount}",
                 ],
             ]);
         } catch (\Exception $e) {

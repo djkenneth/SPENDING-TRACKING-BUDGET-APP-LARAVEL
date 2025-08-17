@@ -37,22 +37,22 @@ class SettingsController extends Controller
             $settings = $user->settings()->pluck('value', 'key')->toArray();
 
             // Parse JSON values
-            foreach ($settings as $key => $value) {
-                $decoded = json_decode($value, true);
-                if (json_last_error() === JSON_ERROR_NONE) {
-                    $settings[$key] = $decoded;
-                }
-            }
+            // foreach ($settings as $key => $value) {
+            //     $decoded = json_decode($value, true);
+            //     if (json_last_error() === JSON_ERROR_NONE) {
+            //         $settings[$key] = $decoded;
+            //     }
+            // }
 
             // Include user preferences
-            $settings['preferences'] = $user->preferences ?? config('user.default_preferences');
-            $settings['currency'] = $user->currency;
-            $settings['timezone'] = $user->timezone;
-            $settings['language'] = $user->language;
+            // $settings['preferences'] = $user->preferences ?? config('user.default_preferences');
+            // $settings['currency'] = $user->currency;
+            // $settings['timezone'] = $user->timezone;
+            // $settings['language'] = $user->language;
 
             return response()->json([
                 'success' => true,
-                'data' => $settings,
+                // 'data' => $settings,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to fetch user settings: ' . $e->getMessage());
@@ -94,11 +94,11 @@ class SettingsController extends Controller
             foreach ($settings as $key => $value) {
                 // Handle special settings that are stored in the users table
                 if (in_array($key, ['currency', 'timezone', 'language'])) {
-                    $user->update([$key => $value]);
+                    // $user->update([$key => $value]);
                     $updated[$key] = $value;
                 } else {
                     // Store in user_settings table
-                    $user->setSetting($key, $value);
+                    // $user->setSetting($key, $value);
                     $updated[$key] = $value;
                 }
             }
@@ -185,7 +185,7 @@ class SettingsController extends Controller
             $currentPreferences = $user->preferences ?? [];
             $newPreferences = array_merge($currentPreferences, $request->all());
 
-            $user->update(['preferences' => $newPreferences]);
+            // $user->update(['preferences' => $newPreferences]);
 
             return response()->json([
                 'success' => true,
@@ -233,26 +233,26 @@ class SettingsController extends Controller
                 'password' => $request->input('password'),
             ];
 
-            $backup = $this->backupService->createBackup($user, $options);
+            // $backup = $this->backupService->createBackup($user, $options);
 
-            if ($backup['success']) {
+            // if ($backup['success']) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Backup created successfully',
-                    'data' => [
-                        'filename' => $backup['filename'],
-                        'size' => $backup['size'],
-                        'download_url' => $backup['url'],
-                        'expires_at' => $backup['expires_at'],
-                    ],
+                    // 'data' => [
+                    //     'filename' => $backup['filename'],
+                    //     'size' => $backup['size'],
+                    //     'download_url' => $backup['url'],
+                    //     'expires_at' => $backup['expires_at'],
+                    // ],
                 ]);
-            }
+            // }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create backup',
-                'error' => $backup['error'] ?? 'Unknown error',
-            ], 500);
+            // return response()->json([
+            //     'success' => false,
+            //     'message' => 'Failed to create backup',
+            //     'error' => $backup['error'] ?? 'Unknown error',
+            // ], 500);
         } catch (\Exception $e) {
             Log::error('Failed to create backup: ' . $e->getMessage());
 

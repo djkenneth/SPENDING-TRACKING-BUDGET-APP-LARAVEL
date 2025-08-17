@@ -8,9 +8,12 @@ use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\DebtController;
 use App\Http\Controllers\Api\FinancialGoalController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\SyncController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -232,12 +235,12 @@ Route::middleware('auth:sanctum')->prefix('debts')->group(function () {
     Route::get('/', [DebtController::class, 'index']); // GET /api/debts
     Route::post('/', [DebtController::class, 'store']); // POST /api/debts
     Route::get('/{debt}', [DebtController::class, 'show']); // GET /api/debts/{id}
-    Route::put('/{debt}', [DebtController::class, 'update']); // PUT /api/debts/{id}
-    Route::delete('/{debt}', [DebtController::class, 'destroy']); // DELETE /api/debts/{id}
+    Route::put('/{debt}', [DebtController::class, 'update']); // PUT /api/debts/{id} - Wala
+    Route::delete('/{debt}', [DebtController::class, 'destroy']); // DELETE /api/debts/{id} - Wala
 
     // Payment Management
     Route::post('/{debt}/payment', [DebtController::class, 'recordPayment']); // POST /api/debts/{id}/payment
-    Route::get('/{debt}/payment-history', [DebtController::class, 'getPaymentHistory']); // GET /api/debts/{id}/payment-history
+    Route::get('/{debt}/payment-history', [DebtController::class, 'getPaymentHistory']); // GET /api/debts/{id}/payment-history - wala
     Route::get('/{debt}/payoff-schedule', [DebtController::class, 'getPayoffSchedule']); // GET /api/debts/{id}/payoff-schedule
 
     // Debt Actions
@@ -255,23 +258,23 @@ Route::middleware('auth:sanctum')->prefix('bills')->group(function () {
     // Core CRUD Operations
     Route::get('/', [BillController::class, 'index']); // GET /api/bills
     Route::post('/', [BillController::class, 'store']); // POST /api/bills
-    Route::get('/{bill}', [BillController::class, 'show']); // GET /api/bills/{id}
-    Route::put('/{bill}', [BillController::class, 'update']); // PUT /api/bills/{id}
-    Route::delete('/{bill}', [BillController::class, 'destroy']); // DELETE /api/bills/{id}
+    Route::get('/{bill}', [BillController::class, 'show']); // GET /api/bills/{id} - wala
+    Route::put('/{bill}', [BillController::class, 'update']); // PUT /api/bills/{id} - wala
+    Route::delete('/{bill}', [BillController::class, 'destroy']); // DELETE /api/bills/{id} - wala
 
     // Bill Actions
     Route::post('/{bill}/pay', [BillController::class, 'markAsPaid']); // POST /api/bills/{id}/pay
-    Route::post('/{bill}/duplicate', [BillController::class, 'duplicate']); // POST /api/bills/{id}/duplicate
+    Route::post('/{bill}/duplicate', [BillController::class, 'duplicate']); // POST /api/bills/{id}/duplicate - wala
 
     // Bill Queries
     Route::get('/status/upcoming', [BillController::class, 'getUpcomingBills']); // GET /api/bills/status/upcoming
-    Route::get('/status/overdue', [BillController::class, 'getOverdueBills']); // GET /api/bills/status/overdue
+    Route::get('/status/overdue', [BillController::class, 'getOverdueBills']); // GET /api/bills/status/overdue - wala
 
     // Payment History
     Route::get('/{bill}/payment-history', [BillController::class, 'getPaymentHistory']); // GET /api/bills/{id}/payment-history
 
     // Statistics
-    Route::get('/analytics/statistics', [BillController::class, 'getStatistics']); // GET /api/bills/analytics/statistics
+    Route::get('/analytics/statistics', [BillController::class, 'getStatistics']); // GET /api/bills/analytics/statistics - wala
 });
 
 /*
@@ -293,17 +296,17 @@ Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
 
     // Notification Info
     Route::get('/status/unread-count', [NotificationController::class, 'getUnreadCount']); // GET /api/notifications/status/unread-count
-    Route::get('/analytics/statistics', [NotificationController::class, 'getStatistics']); // GET /api/notifications/analytics/statistics
+    Route::get('/analytics/statistics', [NotificationController::class, 'getStatistics']); // GET /api/notifications/analytics/statistics - wala
 
     // Settings
     Route::get('/user/settings', [NotificationController::class, 'getSettings']); // GET /api/notifications/user/settings
     Route::put('/user/settings', [NotificationController::class, 'updateSettings']); // PUT /api/notifications/user/settings
 
     // Bulk Operations
-    Route::delete('/bulk/delete', [NotificationController::class, 'bulkDelete']); // DELETE /api/notifications/bulk/delete
+    Route::delete('/bulk/delete', [NotificationController::class, 'bulkDelete']); // DELETE /api/notifications/bulk/delete - wala
 
     // Test Notification (for development/testing)
-    Route::post('/test/send', [NotificationController::class, 'sendTestNotification']); // POST /api/notifications/test/send
+    Route::post('/test/send', [NotificationController::class, 'sendTestNotification']); // POST /api/notifications/test/send - wala
 });
 
 /*
@@ -315,29 +318,82 @@ Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
 Route::middleware('auth:sanctum')->prefix('analytics')->group(function () {
     // Dashboard & Summaries
     Route::get('/dashboard', [AnalyticsController::class, 'dashboard']); // GET /api/analytics/dashboard
-    Route::get('/monthly-summary', [AnalyticsController::class, 'monthlySummary']); // GET /api/analytics/monthly-summary
-    Route::get('/yearly-summary', [AnalyticsController::class, 'yearlySummary']); // GET /api/analytics/yearly-summary
+    Route::get('/monthly-summary', [AnalyticsController::class, 'monthlySummary']); // GET /api/analytics/monthly-summary - wala
+    Route::get('/yearly-summary', [AnalyticsController::class, 'yearlySummary']); // GET /api/analytics/yearly-summary - wala
 
     // Financial Analysis
     Route::get('/income-vs-expenses', [AnalyticsController::class, 'incomeVsExpenses']); // GET /api/analytics/income-vs-expenses
     Route::get('/spending-trends', [AnalyticsController::class, 'spendingTrends']); // GET /api/analytics/spending-trends
     Route::get('/category-breakdown', [AnalyticsController::class, 'categoryBreakdown']); // GET /api/analytics/category-breakdown
-    Route::get('/cash-flow', [AnalyticsController::class, 'cashFlow']); // GET /api/analytics/cash-flow
+    Route::get('/cash-flow', [AnalyticsController::class, 'cashFlow']); // GET /api/analytics/cash-flow - wala
 
     // Net Worth & Goals
-    Route::get('/net-worth', [AnalyticsController::class, 'netWorth']); // GET /api/analytics/net-worth
-    Route::get('/goal-progress', [AnalyticsController::class, 'goalProgress']); // GET /api/analytics/goal-progress
+    Route::get('/net-worth', [AnalyticsController::class, 'netWorth']); // GET /api/analytics/net-worth - wala
+    Route::get('/goal-progress', [AnalyticsController::class, 'goalProgress']); // GET /api/analytics/goal-progress - wala
 
     // Budget Analysis
     Route::get('/budget-performance', [AnalyticsController::class, 'budgetPerformance']); // GET /api/analytics/budget-performance
 
     // Advanced Analytics
-    Route::get('/predictions', [AnalyticsController::class, 'predictions']); // GET /api/analytics/predictions
-    Route::get('/health-score', [AnalyticsController::class, 'healthScore']); // GET /api/analytics/health-score
-    Route::get('/insights', [AnalyticsController::class, 'insights']); // GET /api/analytics/insights
+    Route::get('/predictions', [AnalyticsController::class, 'predictions']); // GET /api/analytics/predictions - wala
+    Route::get('/health-score', [AnalyticsController::class, 'healthScore']); // GET /api/analytics/health-score - wala
+    Route::get('/insights', [AnalyticsController::class, 'insights']); // GET /api/analytics/insights - wala
 
     // Custom Reports
     Route::post('/custom-report', [AnalyticsController::class, 'customReport']); // POST /api/analytics/custom-report
+});
+
+/*
+|--------------------------------------------------------------------------
+| Currencies & Exchange Rates Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('currencies')->group(function () {
+    Route::get('/', [CurrencyController::class, 'index']);
+    Route::post('/convert', [CurrencyController::class, 'convert']);
+});
+
+Route::prefix('exchange-rates')->group(function () {
+    Route::get('/', [CurrencyController::class, 'getExchangeRates']);
+    Route::post('/refresh', [CurrencyController::class, 'refreshExchangeRates']); // Fix the error
+    Route::get('/history', [CurrencyController::class, 'getExchangeRateHistory']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Settings Routes
+|--------------------------------------------------------------------------
+*/
+
+// Settings routes
+Route::prefix('settings')->group(function () {
+    Route::get('/', [SettingsController::class, 'index']); // Fix the error
+    Route::put('/', [SettingsController::class, 'update']);
+    Route::get('/preferences', [SettingsController::class, 'getPreferences']);
+    Route::put('/preferences', [SettingsController::class, 'updatePreferences']);
+    Route::post('/backup', [SettingsController::class, 'createBackup']); // Fix the error
+    Route::post('/restore', [SettingsController::class, 'restoreBackup']);
+    Route::post('/export', [SettingsController::class, 'exportData']);
+    Route::post('/import', [SettingsController::class, 'importData']);
+    Route::get('/notifications', [SettingsController::class, 'getNotificationSettings']);
+    Route::put('/notifications', [SettingsController::class, 'updateNotificationSettings']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Sync Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('sync')->group(function () {
+    Route::get('/status', [SyncController::class, 'getStatus']);
+    Route::post('/transactions', [SyncController::class, 'syncTransactions']);
+    Route::post('/full', [SyncController::class, 'fullSync']);
+    Route::get('/conflicts', [SyncController::class, 'getConflicts']);
+    Route::post('/resolve-conflicts', [SyncController::class, 'resolveConflicts']);
+    Route::get('/last-sync', [SyncController::class, 'getLastSync']);
+    Route::delete('/clear', [SyncController::class, 'clearSyncData']);
 });
 
 /*

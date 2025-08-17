@@ -181,9 +181,9 @@ class FinancialGoalController extends Controller
                 'months_remaining' => max(0, $monthsRemaining),
                 'remaining_amount' => $remainingAmount,
                 'required_monthly_contribution' => $requiredMonthlyContribution,
-                'average_monthly_contribution' => $this->goalService->calculateAverageMonthlyContribution($goal),
+                // 'average_monthly_contribution' => $this->goalService->calculateAverageMonthlyContribution($goal),
                 'is_on_track' => $this->goalService->isGoalOnTrack($goal),
-                'projected_completion_date' => $this->goalService->projectCompletionDate($goal),
+                // 'projected_completion_date' => $this->goalService->projectCompletionDate($goal),
             ],
             'contribution_history' => $contributionHistory,
         ]);
@@ -386,23 +386,23 @@ class FinancialGoalController extends Controller
         $period = $request->input('period', 'monthly');
 
         // Get contribution statistics
-        $contributionStats = $this->goalService->getContributionStatistics($goal, $period);
+        // $contributionStats = $this->goalService->getContributionStatistics($goal, $period);
 
         // Get progress timeline
         $progressTimeline = $this->goalService->getProgressTimeline($goal, $period);
 
         // Calculate projection
-        $projection = $this->goalService->calculateGoalProjection($goal);
+        // $projection = $this->goalService->calculateGoalProjection($goal);
 
         // Get milestones status
         $milestones = $this->goalService->getMilestoneStatus($goal);
 
         return response()->json([
             'success' => true,
-            'data' => new GoalProgressResource($goal),
-            'statistics' => $contributionStats,
+            // 'data' => new GoalProgressResource($goal),
+            // 'statistics' => $contributionStats,
             'timeline' => $progressTimeline,
-            'projection' => $projection,
+            // 'projection' => $projection,
             'milestones' => $milestones,
         ]);
     }
