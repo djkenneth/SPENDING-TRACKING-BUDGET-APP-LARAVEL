@@ -20,6 +20,38 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     /**
+     * @OA\Post(
+     *     path="/api/auth/register",
+     *     tags={"Authentication"},
+     *     summary="Register a new user",
+     *     description="Create a new user account",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","email","password","password_confirmation"},
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="User registered successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User registered successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user", type="object"),
+     *                 @OA\Property(property="token", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+
+    /**
      * Register a new user
      */
     public function register(RegisterRequest $request): JsonResponse
@@ -64,6 +96,37 @@ class AuthController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/auth/login",
+     *     tags={"Authentication"},
+     *     summary="Login user",
+     *     description="Authenticate user and return token",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="remember", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user", type="object"),
+     *                 @OA\Property(property="token", type="string"),
+     *                 @OA\Property(property="token_type", type="string", example="Bearer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Invalid credentials")
+     * )
+     */
+
+    /**
      * Login user
      */
     public function login(LoginRequest $request): JsonResponse
@@ -98,6 +161,25 @@ class AuthController extends Controller
             ]
         ]);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/auth/logout",
+     *     tags={"Authentication"},
+     *     summary="Logout user",
+     *     description="Revoke current user token",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Logged out successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Logged out successfully")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
 
     /**
      * Logout user
