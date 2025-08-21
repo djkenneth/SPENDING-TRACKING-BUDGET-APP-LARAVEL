@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\DebtController;
 use App\Http\Controllers\Api\FinancialGoalController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\SyncController;
@@ -401,6 +402,8 @@ Route::prefix('sync')->group(function () {
 | Other API Routes
 |--------------------------------------------------------------------------
 */
+
+Route::get('/health', [HealthController::class, 'index']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();
