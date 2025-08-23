@@ -5,7 +5,7 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'Budget App API Documentation',
+                'title' => 'L5 Swagger UI',
             ],
 
             'routes' => [
@@ -23,7 +23,7 @@ return [
                 /*
                 * Edit to set path where swagger ui assets should be stored
                 */
-                // 'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
+                'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
 
                 /*
                  * File name of the generated json documentation file
@@ -45,8 +45,6 @@ return [
                  */
                 'annotations' => [
                     base_path('app'),
-                    base_path('app/Http/Controllers'),
-                    base_path('app/Swagger'),
                 ],
             ],
         ],
@@ -94,8 +92,6 @@ return [
              * Edit to set the api's base path
              */
             'base' => env('L5_SWAGGER_BASE_PATH', null),
-
-            'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
 
             /*
              * Absolute path to directories that should be excluded from scanning
@@ -219,13 +215,6 @@ return [
                     'in' => 'header', // The location of the API key. Valid values are "query" or "header".
                 ],
                 */
-
-                'sanctum' => [ // Unique name of security
-                    'type' => 'http', // Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'Laravel Sanctum token authentication',
-                    'name' => 'bearer', // The name of the header or query parameter to be used.
-                    'in' => 'JWT', // The location of the API key. Valid values are "query" or "header".
-                ],
             ],
             'security' => [
                 /*
@@ -240,8 +229,6 @@ return [
 
                     'passport' => []
                     */
-
-                    'sanctum' => []
                 ],
             ],
         ],

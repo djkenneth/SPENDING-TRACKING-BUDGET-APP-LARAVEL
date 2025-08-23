@@ -1,0 +1,1368 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Budget App API",
+        "description": "API documentation for Budget Management Application",
+        "contact": {
+            "email": "admin@budgetapp.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/api": {},
+        "/api/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "description": "Create a new user account",
+                "operationId": "register",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "currency": {
+                                        "description": "Default currency",
+                                        "type": "string",
+                                        "example": "PHP"
+                                    },
+                                    "timezone": {
+                                        "description": "User timezone",
+                                        "type": "string",
+                                        "example": "Asia/Manila"
+                                    },
+                                    "language": {
+                                        "description": "Preferred language",
+                                        "type": "string",
+                                        "example": "en"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User registered successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "1|abcdefghijklmnop"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The email has already been taken."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User login",
+                "description": "Authenticate user and receive token",
+                "operationId": "login",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "remember": {
+                                        "description": "Remember me",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login successful"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "2|xyzabcdefghijk"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid credentials"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout user",
+                "description": "Revoke current user token",
+                "operationId": "logout",
+                "responses": {
+                    "200": {
+                        "description": "Logged out successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logged out successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Health check",
+                "description": "Check if API is running",
+                "operationId": "healthCheck",
+                "responses": {
+                    "200": {
+                        "description": "API is healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "healthy"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "example": "2025-01-15T10:00:00Z"
+                                        },
+                                        "version": {
+                                            "type": "string",
+                                            "example": "1.0.0"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Account": {
+                "title": "Account",
+                "description": "Financial account model",
+                "required": [
+                    "id",
+                    "user_id",
+                    "name",
+                    "type",
+                    "balance",
+                    "currency"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Main Savings Account"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "checking",
+                            "savings",
+                            "credit_card",
+                            "investment",
+                            "loan",
+                            "cash",
+                            "other"
+                        ],
+                        "example": "savings"
+                    },
+                    "balance": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "PHP"
+                    },
+                    "institution": {
+                        "type": "string",
+                        "example": "BDO",
+                        "nullable": true
+                    },
+                    "account_number": {
+                        "type": "string",
+                        "example": "****1234",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Primary savings account for emergency fund",
+                        "nullable": true
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "#4CAF50",
+                        "nullable": true
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "bank",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_included_in_totals": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "DashboardStats": {
+                "properties": {
+                    "total_balance": {
+                        "type": "number",
+                        "example": 150000
+                    },
+                    "total_income": {
+                        "type": "number",
+                        "example": 50000
+                    },
+                    "total_expenses": {
+                        "type": "number",
+                        "example": 35000
+                    },
+                    "net_worth": {
+                        "type": "number",
+                        "example": 150000
+                    },
+                    "monthly_average_income": {
+                        "type": "number",
+                        "example": 50000
+                    },
+                    "monthly_average_expense": {
+                        "type": "number",
+                        "example": 35000
+                    },
+                    "savings_rate": {
+                        "type": "number",
+                        "example": 30
+                    },
+                    "accounts_summary": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "example": "savings"
+                                },
+                                "count": {
+                                    "type": "integer",
+                                    "example": 2
+                                },
+                                "total": {
+                                    "type": "number",
+                                    "example": 100000
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "recent_transactions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Transaction"
+                        }
+                    },
+                    "budget_status": {
+                        "properties": {
+                            "total_budgets": {
+                                "type": "integer",
+                                "example": 5
+                            },
+                            "over_budget": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "on_track": {
+                                "type": "integer",
+                                "example": 3
+                            },
+                            "under_budget": {
+                                "type": "integer",
+                                "example": 1
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "SpendingAnalysis": {
+                "properties": {
+                    "period": {
+                        "type": "string",
+                        "example": "2025-01"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "category_id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "category_name": {
+                                    "type": "string",
+                                    "example": "Food & Dining"
+                                },
+                                "total_spent": {
+                                    "type": "number",
+                                    "example": 15000
+                                },
+                                "percentage": {
+                                    "type": "number",
+                                    "example": 42.86
+                                },
+                                "transaction_count": {
+                                    "type": "integer",
+                                    "example": 25
+                                },
+                                "average_transaction": {
+                                    "type": "number",
+                                    "example": 600
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "total_spent": {
+                        "type": "number",
+                        "example": 35000
+                    },
+                    "top_merchants": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "example": "SM Supermarket"
+                                },
+                                "amount": {
+                                    "type": "number",
+                                    "example": 5000
+                                },
+                                "count": {
+                                    "type": "integer",
+                                    "example": 4
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Budget": {
+                "title": "Budget",
+                "description": "Budget model",
+                "required": [
+                    "id",
+                    "user_id",
+                    "name",
+                    "amount",
+                    "period",
+                    "start_date",
+                    "end_date"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Monthly Food Budget"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10000
+                    },
+                    "period": {
+                        "type": "string",
+                        "enum": [
+                            "daily",
+                            "weekly",
+                            "monthly",
+                            "yearly",
+                            "custom"
+                        ],
+                        "example": "monthly"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-31"
+                    },
+                    "spent_amount": {
+                        "description": "Amount spent so far",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4500
+                    },
+                    "remaining_amount": {
+                        "description": "Remaining budget",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5500
+                    },
+                    "rollover": {
+                        "description": "Rollover unused amount to next period",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "alert_threshold": {
+                        "description": "Alert when X% of budget is reached",
+                        "type": "integer",
+                        "example": 80,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Category": {
+                "title": "Category",
+                "description": "Transaction category model",
+                "required": [
+                    "id",
+                    "user_id",
+                    "name",
+                    "type"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "parent_id": {
+                        "description": "Parent category ID for subcategories",
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Food & Dining"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "both"
+                        ],
+                        "example": "expense"
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "#FF5722"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "restaurant"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "All food-related expenses",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_system": {
+                        "description": "System-defined category",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "LoginRequest": {
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "password123"
+                    },
+                    "remember": {
+                        "description": "Remember me token",
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "RegisterRequest": {
+                "required": [
+                    "name",
+                    "email",
+                    "password",
+                    "password_confirmation"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "minLength": 8,
+                        "example": "password123"
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "password123"
+                    },
+                    "currency": {
+                        "description": "Default currency",
+                        "type": "string",
+                        "example": "PHP"
+                    },
+                    "timezone": {
+                        "description": "User timezone",
+                        "type": "string",
+                        "example": "Asia/Manila"
+                    },
+                    "language": {
+                        "description": "Preferred language",
+                        "type": "string",
+                        "example": "en"
+                    }
+                },
+                "type": "object"
+            },
+            "CreateTransactionRequest": {
+                "required": [
+                    "account_id",
+                    "category_id",
+                    "amount",
+                    "type",
+                    "date",
+                    "description"
+                ],
+                "properties": {
+                    "account_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500.5
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Grocery shopping"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Weekly groceries",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "groceries",
+                            "food"
+                        ]
+                    },
+                    "transfer_account_id": {
+                        "description": "Required for transfer type",
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateTransactionRequest": {
+                "properties": {
+                    "account_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500.5
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Grocery shopping"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Weekly groceries",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "groceries",
+                            "food"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "CreateBudgetRequest": {
+                "required": [
+                    "name",
+                    "amount",
+                    "period",
+                    "start_date"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Monthly Food Budget"
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10000
+                    },
+                    "period": {
+                        "type": "string",
+                        "enum": [
+                            "daily",
+                            "weekly",
+                            "monthly",
+                            "yearly",
+                            "custom"
+                        ],
+                        "example": "monthly"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-31",
+                        "nullable": true
+                    },
+                    "rollover": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "alert_threshold": {
+                        "type": "integer",
+                        "example": 80
+                    }
+                },
+                "type": "object"
+            },
+            "SuccessResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Operation completed successfully"
+                    },
+                    "data": {
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "An error occurred"
+                    },
+                    "error": {
+                        "type": "string",
+                        "example": "Error details"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "The given data was invalid."
+                    },
+                    "errors": {
+                        "properties": {
+                            "field_name": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "The field is required."
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginatedResponse": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "links": {
+                        "properties": {
+                            "first": {
+                                "type": "string",
+                                "example": "http://localhost:8000/api/resource?page=1"
+                            },
+                            "last": {
+                                "type": "string",
+                                "example": "http://localhost:8000/api/resource?page=10"
+                            },
+                            "prev": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "next": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "meta": {
+                        "properties": {
+                            "current_page": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "from": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "last_page": {
+                                "type": "integer",
+                                "example": 10
+                            },
+                            "links": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "active": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "path": {
+                                "type": "string",
+                                "example": "http://localhost:8000/api/resource"
+                            },
+                            "per_page": {
+                                "type": "integer",
+                                "example": 15
+                            },
+                            "to": {
+                                "type": "integer",
+                                "example": 15
+                            },
+                            "total": {
+                                "type": "integer",
+                                "example": 150
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "UnauthorizedResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Unauthenticated."
+                    }
+                },
+                "type": "object"
+            },
+            "Transaction": {
+                "title": "Transaction",
+                "description": "Financial transaction model",
+                "required": [
+                    "id",
+                    "user_id",
+                    "account_id",
+                    "category_id",
+                    "amount",
+                    "type",
+                    "date",
+                    "description"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "account_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500.5
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Grocery shopping at SM Supermarket"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Weekly groceries",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "groceries",
+                            "food",
+                            "essentials"
+                        ]
+                    },
+                    "reference_number": {
+                        "type": "string",
+                        "example": "REF-2025-001",
+                        "nullable": true
+                    },
+                    "location": {
+                        "type": "string",
+                        "example": "SM North EDSA",
+                        "nullable": true
+                    },
+                    "receipt_url": {
+                        "type": "string",
+                        "example": "receipts/2025/01/receipt1.jpg",
+                        "nullable": true
+                    },
+                    "is_recurring": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "recurring_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "transfer_account_id": {
+                        "description": "For transfer transactions",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_cleared": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "title": "User",
+                "description": "User model",
+                "required": [
+                    "id",
+                    "name",
+                    "email"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com"
+                    },
+                    "email_verified_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "example": "avatars/user1.jpg",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+639123456789",
+                        "nullable": true
+                    },
+                    "date_of_birth": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "1990-01-15",
+                        "nullable": true
+                    },
+                    "currency": {
+                        "description": "3-letter currency code",
+                        "type": "string",
+                        "example": "PHP"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "example": "Asia/Manila"
+                    },
+                    "language": {
+                        "type": "string",
+                        "example": "en"
+                    },
+                    "preferences": {
+                        "properties": {
+                            "theme": {
+                                "type": "string",
+                                "example": "dark"
+                            },
+                            "notifications": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "email_alerts": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "last_login_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T08:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T08:00:00Z"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "description": "Enter token in format (Bearer <token>)",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "Authentication endpoints"
+        },
+        {
+            "name": "System",
+            "description": "System"
+        }
+    ]
+}
