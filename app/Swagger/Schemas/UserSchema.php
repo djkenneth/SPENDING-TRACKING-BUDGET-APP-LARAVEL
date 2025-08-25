@@ -25,6 +25,7 @@ namespace App\Swagger\Schemas;
  *         @OA\Property(property="email_alerts", type="boolean", example=true)
  *     ),
  *     @OA\Property(property="last_login_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="last_login_ip", type="string", nullable=true, example="192.168.1.1"),
  *     @OA\Property(property="is_active", type="boolean", example=true),
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2025-01-15T08:00:00Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2025-01-15T08:00:00Z")

@@ -20,6 +20,1318 @@
     ],
     "paths": {
         "/api": {},
+        "/api/accounts": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Get all accounts",
+                "description": "Get all user accounts with optional filtering",
+                "operationId": "getAccounts",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter by account type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "cash",
+                                "bank",
+                                "credit_card",
+                                "investment",
+                                "ewallet"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "include_inactive",
+                        "in": "query",
+                        "description": "Include inactive accounts",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Accounts retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Account"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "total_balance": {
+                                                    "type": "number",
+                                                    "example": 50000
+                                                },
+                                                "net_worth": {
+                                                    "type": "number",
+                                                    "example": 45000
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "PHP"
+                                                },
+                                                "currency_symbol": {
+                                                    "type": "string",
+                                                    "example": "₱"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Create new account",
+                "description": "Create a new financial account",
+                "operationId": "createAccount",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type",
+                                    "balance"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Main Bank Account"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "cash",
+                                            "bank",
+                                            "credit_card",
+                                            "investment",
+                                            "ewallet"
+                                        ],
+                                        "example": "bank"
+                                    },
+                                    "balance": {
+                                        "type": "number",
+                                        "example": 1000.5
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "PHP"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#2196F3"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "account_balance"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "My primary savings account"
+                                    },
+                                    "account_number": {
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "institution": {
+                                        "type": "string",
+                                        "example": "BDO"
+                                    },
+                                    "credit_limit": {
+                                        "description": "For credit cards only",
+                                        "type": "number",
+                                        "example": 50000
+                                    },
+                                    "include_in_net_worth": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Account created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Account"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/{account}": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Get account details",
+                "description": "Get specific account details with statistics",
+                "operationId": "getAccount",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "description": "Account ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Account retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Account"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "statistics": {
+                                                            "properties": {
+                                                                "total_income": {
+                                                                    "type": "number",
+                                                                    "example": 10000
+                                                                },
+                                                                "total_expenses": {
+                                                                    "type": "number",
+                                                                    "example": 8000
+                                                                },
+                                                                "transaction_count": {
+                                                                    "type": "integer",
+                                                                    "example": 150
+                                                                },
+                                                                "average_transaction": {
+                                                                    "type": "number",
+                                                                    "example": 133.33
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Update account",
+                "description": "Update account information",
+                "operationId": "updateAccount",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "description": "Account ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Updated Account Name"
+                                    },
+                                    "balance": {
+                                        "type": "number",
+                                        "example": 2000
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#4CAF50"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "account_balance_wallet"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Updated description"
+                                    },
+                                    "credit_limit": {
+                                        "type": "number",
+                                        "example": 75000
+                                    },
+                                    "include_in_net_worth": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Account updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Account"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Delete account",
+                "description": "Delete an account",
+                "operationId": "deleteAccount",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "description": "Account ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Account deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot delete account"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/{account}/transactions": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Get account transactions",
+                "description": "Get transactions for a specific account",
+                "operationId": "getAccountTransactions",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "description": "Account ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Transaction type",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "income",
+                                "expense",
+                                "transfer"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transactions retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Transaction"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "from": {
+                                                    "type": "integer"
+                                                },
+                                                "to": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/{account}/balance-history": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Get balance history",
+                "description": "Get account balance history over time",
+                "operationId": "getAccountBalanceHistory",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "description": "Account ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Period",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Balance history retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "date": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "balance": {
+                                                        "type": "number"
+                                                    },
+                                                    "change_amount": {
+                                                        "type": "number"
+                                                    },
+                                                    "change_type": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/transfer": {
+            "post": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Transfer between accounts",
+                "description": "Transfer money between two accounts",
+                "operationId": "transferBetweenAccounts",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "from_account_id",
+                                    "to_account_id",
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "from_account_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "to_account_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "example": 500
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Transfer to savings"
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-15"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Monthly savings transfer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transfer completed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transfer completed successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "transfer_id": {
+                                                    "type": "integer"
+                                                },
+                                                "from_transaction": {
+                                                    "$ref": "#/components/schemas/Transaction"
+                                                },
+                                                "to_transaction": {
+                                                    "$ref": "#/components/schemas/Transaction"
+                                                },
+                                                "from_account_balance": {
+                                                    "type": "number"
+                                                },
+                                                "to_account_balance": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/{account}/adjust-balance": {
+            "post": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Adjust account balance",
+                "description": "Manually adjust account balance to match actual balance",
+                "operationId": "adjustAccountBalance",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "description": "Account ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "balance",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "balance": {
+                                        "type": "number",
+                                        "example": 5000
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Monthly reconciliation"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Balance adjusted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account balance adjusted successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Account"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/types": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Get account types",
+                "description": "Get available account types and their configurations",
+                "operationId": "getAccountTypes",
+                "responses": {
+                    "200": {
+                        "description": "Account types retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string"
+                                                    },
+                                                    "color": {
+                                                        "type": "string"
+                                                    },
+                                                    "supports_credit_limit": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "default_include_in_net_worth": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/summary": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Get accounts summary",
+                "description": "Get summary statistics of all accounts",
+                "operationId": "getAccountsSummary",
+                "responses": {
+                    "200": {
+                        "description": "Summary retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_accounts": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "total_balance": {
+                                                    "type": "number",
+                                                    "example": 50000
+                                                },
+                                                "net_worth": {
+                                                    "type": "number",
+                                                    "example": 45000
+                                                },
+                                                "total_assets": {
+                                                    "type": "number",
+                                                    "example": 55000
+                                                },
+                                                "total_liabilities": {
+                                                    "type": "number",
+                                                    "example": 10000
+                                                },
+                                                "accounts_by_type": {
+                                                    "type": "object"
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "PHP"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/{account}/performance-metrics": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Get performance metrics",
+                "description": "Get account performance metrics over time",
+                "operationId": "getAccountPerformanceMetrics",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "description": "Account ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "months",
+                        "in": "query",
+                        "description": "Number of months to analyze (1-24)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 6
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Metrics retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "monthly_data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "month": {
+                                                                "type": "string"
+                                                            },
+                                                            "income": {
+                                                                "type": "number"
+                                                            },
+                                                            "expenses": {
+                                                                "type": "number"
+                                                            },
+                                                            "net": {
+                                                                "type": "number"
+                                                            },
+                                                            "transaction_count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "average_income": {
+                                                    "type": "number"
+                                                },
+                                                "average_expenses": {
+                                                    "type": "number"
+                                                },
+                                                "average_net": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/{account}/sync-balance": {
+            "post": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Sync account balance",
+                "description": "Synchronize account balance with actual balance",
+                "operationId": "syncAccountBalance",
+                "parameters": [
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "description": "Account ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "actual_balance"
+                                ],
+                                "properties": {
+                                    "actual_balance": {
+                                        "type": "number",
+                                        "example": 10000
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Bank statement reconciliation"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Balance synced successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account balance synced successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "old_balance": {
+                                                    "type": "number"
+                                                },
+                                                "new_balance": {
+                                                    "type": "number"
+                                                },
+                                                "difference": {
+                                                    "type": "number"
+                                                },
+                                                "account": {
+                                                    "$ref": "#/components/schemas/Account"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Account not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts/bulk/update": {
+            "put": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Bulk update accounts",
+                "description": "Update multiple accounts at once",
+                "operationId": "bulkUpdateAccounts",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "accounts"
+                                ],
+                                "properties": {
+                                    "accounts": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "id"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Updated Name"
+                                                },
+                                                "color": {
+                                                    "type": "string",
+                                                    "example": "#FF0000"
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "account_balance"
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "include_in_net_worth": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Accounts updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accounts updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Account"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/auth/register": {
             "post": {
                 "tags": [
@@ -917,6 +2229,1320 @@
                     }
                 }
             }
+        },
+        "/api/user/profile": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user profile",
+                "description": "Get current authenticated user profile",
+                "operationId": "getUserProfile",
+                "responses": {
+                    "200": {
+                        "description": "Profile retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user profile",
+                "description": "Update authenticated user profile information",
+                "operationId": "updateUserProfile",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+639123456789"
+                                    },
+                                    "date_of_birth": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-01-01"
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "PHP"
+                                    },
+                                    "timezone": {
+                                        "type": "string",
+                                        "example": "Asia/Manila"
+                                    },
+                                    "language": {
+                                        "type": "string",
+                                        "example": "en"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/password": {
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user password",
+                "description": "Change authenticated user's password",
+                "operationId": "updateUserPassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "currentPass123"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newPass123!"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newPass123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/avatar": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Upload avatar",
+                "description": "Upload or update user avatar image",
+                "operationId": "uploadAvatar",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "avatar"
+                                ],
+                                "properties": {
+                                    "avatar": {
+                                        "description": "Avatar image file",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Avatar uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Avatar uploaded successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "avatar_url": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/storage/avatars/user1.jpg"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete avatar",
+                "description": "Remove user avatar image",
+                "operationId": "deleteAvatar",
+                "responses": {
+                    "200": {
+                        "description": "Avatar deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Avatar deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/preferences": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user preferences",
+                "description": "Get user preferences and settings",
+                "operationId": "getUserPreferences",
+                "responses": {
+                    "200": {
+                        "description": "Preferences retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "PHP"
+                                                },
+                                                "timezone": {
+                                                    "type": "string",
+                                                    "example": "Asia/Manila"
+                                                },
+                                                "language": {
+                                                    "type": "string",
+                                                    "example": "en"
+                                                },
+                                                "preferences": {
+                                                    "type": "object"
+                                                },
+                                                "currency_symbol": {
+                                                    "type": "string",
+                                                    "example": "₱"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user preferences",
+                "description": "Update user preferences and settings",
+                "operationId": "updateUserPreferences",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "USD"
+                                    },
+                                    "timezone": {
+                                        "type": "string",
+                                        "example": "America/New_York"
+                                    },
+                                    "language": {
+                                        "type": "string",
+                                        "example": "en"
+                                    },
+                                    "preferences": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Preferences updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Preferences updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/settings": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user settings",
+                "description": "Get all user settings",
+                "operationId": "getUserSettings",
+                "responses": {
+                    "200": {
+                        "description": "Settings retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user settings",
+                "description": "Update user settings",
+                "operationId": "updateUserSettings",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "settings"
+                                ],
+                                "properties": {
+                                    "settings": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Settings updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Settings updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/dashboard-stats": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get dashboard statistics",
+                "description": "Get user dashboard statistics and metrics",
+                "operationId": "getDashboardStats",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard stats retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "net_worth": {
+                                                    "type": "number",
+                                                    "example": 50000
+                                                },
+                                                "total_accounts": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "total_categories": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "current_month_income": {
+                                                    "type": "number",
+                                                    "example": 5000
+                                                },
+                                                "current_month_expenses": {
+                                                    "type": "number",
+                                                    "example": 3000
+                                                },
+                                                "total_transactions": {
+                                                    "type": "integer",
+                                                    "example": 250
+                                                },
+                                                "active_budgets": {
+                                                    "type": "integer",
+                                                    "example": 8
+                                                },
+                                                "active_goals": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "active_debts": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "upcoming_bills": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "unread_notifications": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "currency_symbol": {
+                                                    "type": "string",
+                                                    "example": "₱"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/activity-summary": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get activity summary",
+                "description": "Get user activity summary for specified period",
+                "operationId": "getActivitySummary",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Number of days to include (default: 30)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Activity summary retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "transactions_count": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "recent_transactions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Groceries"
+                                                            },
+                                                            "amount": {
+                                                                "type": "number",
+                                                                "example": 150.5
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "expense"
+                                                            },
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2024-01-15"
+                                                            },
+                                                            "account": {
+                                                                "type": "string",
+                                                                "example": "Cash"
+                                                            },
+                                                            "category": {
+                                                                "type": "string",
+                                                                "example": "Food & Dining"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "budget_utilization": {
+                                                    "type": "number",
+                                                    "example": 75.5
+                                                },
+                                                "goals_progress": {
+                                                    "type": "number",
+                                                    "example": 60
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/account-summary": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get account summary",
+                "description": "Get summary of all user accounts",
+                "operationId": "getAccountSummary",
+                "responses": {
+                    "200": {
+                        "description": "Account summary retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_balance": {
+                                                    "type": "number",
+                                                    "example": 25000
+                                                },
+                                                "accounts_by_type": {
+                                                    "type": "object"
+                                                },
+                                                "accounts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Main Bank"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "bank"
+                                                            },
+                                                            "balance": {
+                                                                "type": "number",
+                                                                "example": 15000
+                                                            },
+                                                            "currency": {
+                                                                "type": "string",
+                                                                "example": "PHP"
+                                                            },
+                                                            "color": {
+                                                                "type": "string",
+                                                                "example": "#2196F3"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "example": "account_balance"
+                                                            },
+                                                            "include_in_net_worth": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/export-data": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Export user data",
+                "description": "Export all user data in JSON format",
+                "operationId": "exportUserData",
+                "responses": {
+                    "200": {
+                        "description": "Data exported successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data exported successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                "accounts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Account"
+                                                    }
+                                                },
+                                                "categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Category"
+                                                    }
+                                                },
+                                                "transactions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Transaction"
+                                                    }
+                                                },
+                                                "budgets": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Budget"
+                                                    }
+                                                },
+                                                "settings": {
+                                                    "type": "object"
+                                                },
+                                                "exported_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/delete-account": {
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete user account",
+                "description": "Permanently delete user account and all associated data",
+                "operationId": "deleteUserAccount",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "password",
+                                    "confirmation"
+                                ],
+                                "properties": {
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "confirmation": {
+                                        "description": "Must be 'DELETE' to confirm",
+                                        "type": "string",
+                                        "example": "DELETE"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Account deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/notification-settings": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get notification settings",
+                "description": "Get user notification preferences",
+                "operationId": "getNotificationSettings",
+                "responses": {
+                    "200": {
+                        "description": "Notification settings retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "budget_alerts": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "bill_reminders": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "goal_milestones": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "low_balance_alerts": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "transaction_notifications": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "email_notifications": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "push_notifications": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "sms_notifications": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update notification settings",
+                "description": "Update user notification preferences",
+                "operationId": "updateNotificationSettings",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "budget_alerts": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "bill_reminders": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "goal_milestones": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "low_balance_alerts": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "transaction_notifications": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "email_notifications": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "push_notifications": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sms_notifications": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification settings updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification settings updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/security-info": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get security information",
+                "description": "Get user account security information",
+                "operationId": "getSecurityInfo",
+                "responses": {
+                    "200": {
+                        "description": "Security info retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "email_verified": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "email_verified_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "last_login_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "last_login_ip": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "active_sessions": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "two_factor_enabled": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "backup_codes_generated": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/sessions/{token_id}": {
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Revoke session",
+                "description": "Revoke a specific session/token",
+                "operationId": "revokeToken",
+                "parameters": [
+                    {
+                        "name": "token_id",
+                        "in": "path",
+                        "description": "Token ID to revoke",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session revoked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Session revoked successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot revoke current session"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/active-sessions": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get active sessions",
+                "description": "Get all active user sessions/tokens",
+                "operationId": "getActiveSessions",
+                "responses": {
+                    "200": {
+                        "description": "Active sessions retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "auth_token"
+                                                    },
+                                                    "last_used_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "is_current": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -972,6 +3598,10 @@
                         "example": "BDO",
                         "nullable": true
                     },
+                    "credit_limit": {
+                        "type": "number",
+                        "nullable": true
+                    },
                     "account_number": {
                         "type": "string",
                         "example": "****1234",
@@ -991,6 +3621,10 @@
                         "type": "string",
                         "example": "bank",
                         "nullable": true
+                    },
+                    "include_in_net_worth": {
+                        "type": "boolean",
+                        "example": true
                     },
                     "is_active": {
                         "type": "boolean",
@@ -1914,6 +4548,11 @@
                         "format": "date-time",
                         "nullable": true
                     },
+                    "last_login_ip": {
+                        "type": "string",
+                        "example": "192.168.1.1",
+                        "nullable": true
+                    },
                     "is_active": {
                         "type": "boolean",
                         "example": true
@@ -1945,6 +4584,14 @@
         {
             "name": "Authentication",
             "description": "Authentication endpoints"
+        },
+        {
+            "name": "Users",
+            "description": "User management endpoints"
+        },
+        {
+            "name": "Accounts",
+            "description": "Account management endpoints"
         },
         {
             "name": "System",
