@@ -24,6 +24,35 @@ class CategoryController extends Controller
 
     /**
      * Get all user categories
+     *
+     * @OA\Get(
+     *     path="/api/categories",
+     *     operationId="getCategories",
+     *     tags={"Categories"},
+     *     summary="Get all user categories",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string", enum={"income", "expense", "transfer"})),
+     *     @OA\Parameter(name="is_active", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="include_inactive", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="sort_by", in="query", required=false, @OA\Schema(type="string", enum={"name", "sort_order", "created_at"})),
+     *     @OA\Parameter(name="sort_direction", in="query", required=false, @OA\Schema(type="string", enum={"asc", "desc"})),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CategoryResource")),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="by_type", type="object"),
+     *                 @OA\Property(property="active_count", type="integer"),
+     *                 @OA\Property(property="inactive_count", type="integer"),
+     *                 @OA\Property(property="statistics", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -73,6 +102,30 @@ class CategoryController extends Controller
 
     /**
      * Create a new category
+     *
+     * @OA\Post(
+     *     path="/api/categories",
+     *     operationId="createCategory",
+     *     tags={"Categories"},
+     *     summary="Create a new category",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/CreateCategoryRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Category created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CategoryResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation Error")
+     * )
      */
     public function store(CreateCategoryRequest $request): JsonResponse
     {
@@ -100,6 +153,25 @@ class CategoryController extends Controller
 
     /**
      * Get specific category
+     *
+     * @OA\Get(
+     *     path="/api/categories/{id}",
+     *     operationId="getCategory",
+     *     tags={"Categories"},
+     *     summary="Get specific category",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CategoryResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Category not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function show(Request $request, Category $category): JsonResponse
     {
@@ -124,6 +196,31 @@ class CategoryController extends Controller
 
     /**
      * Update category
+     *
+     * @OA\Put(
+     *     path="/api/categories/{id}",
+     *     operationId="updateCategory",
+     *     tags={"Categories"},
+     *     summary="Update category",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/UpdateCategoryRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Category updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CategoryResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Category not found"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation Error")
+     * )
      */
     public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
     {
@@ -159,6 +256,26 @@ class CategoryController extends Controller
 
     /**
      * Delete category
+     *
+     * @OA\Delete(
+     *     path="/api/categories/{id}",
+     *     operationId="deleteCategory",
+     *     tags={"Categories"},
+     *     summary="Delete category",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Category deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Cannot delete category"),
+     *     @OA\Response(response=404, description="Category not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function destroy(Request $request, Category $category): JsonResponse
     {
@@ -203,6 +320,32 @@ class CategoryController extends Controller
 
     /**
      * Get category transactions
+     *
+     * @OA\Get(
+     *     path="/api/categories/{id}/transactions",
+     *     operationId="getCategoryTransactions",
+     *     tags={"Categories"},
+     *     summary="Get category transactions",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", minimum=1)),
+     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", minimum=1, maximum=100)),
+     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="account_id", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string", enum={"income", "expense", "transfer"})),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Category transactions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Category not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function transactions(Request $request, Category $category): JsonResponse
     {
@@ -261,6 +404,27 @@ class CategoryController extends Controller
 
     /**
      * Get spending analysis by category
+     *
+     * @OA\Get(
+     *     path="/api/categories/analytics/spending-analysis",
+     *     operationId="getCategorySpendingAnalysis",
+     *     tags={"Categories"},
+     *     summary="Get spending analysis by category",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"week", "month", "quarter", "year"})),
+     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string", enum={"income", "expense"})),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Spending analysis data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function spendingAnalysis(Request $request): JsonResponse
     {
@@ -292,6 +456,26 @@ class CategoryController extends Controller
 
     /**
      * Get category trends
+     *
+     * @OA\Get(
+     *     path="/api/categories/analytics/trends",
+     *     operationId="getCategoryTrends",
+     *     tags={"Categories"},
+     *     summary="Get category trends",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"month", "quarter", "year"})),
+     *     @OA\Parameter(name="months", in="query", required=false, @OA\Schema(type="integer", minimum=1, maximum=24)),
+     *     @OA\Parameter(name="category_ids[]", in="query", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Category trends data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function trends(Request $request): JsonResponse
     {
@@ -321,6 +505,38 @@ class CategoryController extends Controller
 
     /**
      * Bulk update categories
+     *
+     * @OA\Put(
+     *     path="/api/categories/bulk/update",
+     *     operationId="bulkUpdateCategories",
+     *     tags={"Categories"},
+     *     summary="Bulk update categories",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="categories", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="color", type="string"),
+     *                 @OA\Property(property="icon", type="string"),
+     *                 @OA\Property(property="is_active", type="boolean"),
+     *                 @OA\Property(property="sort_order", type="integer")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Categories updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CategoryResource"))
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function bulkUpdate(Request $request): JsonResponse
     {
@@ -347,7 +563,7 @@ class CategoryController extends Controller
                     continue;
                 }
 
-                $category->update(array_filter($categoryData, function($key) {
+                $category->update(array_filter($categoryData, function ($key) {
                     return $key !== 'id';
                 }, ARRAY_FILTER_USE_KEY));
 
@@ -373,6 +589,33 @@ class CategoryController extends Controller
 
     /**
      * Reorder categories
+     *
+     * @OA\Put(
+     *     path="/api/categories/bulk/reorder",
+     *     operationId="reorderCategories",
+     *     tags={"Categories"},
+     *     summary="Reorder categories",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="categories", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="sort_order", type="integer")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Categories reordered successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function reorder(Request $request): JsonResponse
     {
@@ -413,6 +656,26 @@ class CategoryController extends Controller
 
     /**
      * Get category icons and colors
+     *
+     * @OA\Get(
+     *     path="/api/categories/meta/icons-and-colors",
+     *     operationId="getCategoryIconsAndColors",
+     *     tags={"Categories"},
+     *     summary="Get available icons and colors",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Available icons and colors",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="icons", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="colors", type="array", @OA\Items(type="string"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function getIconsAndColors(): JsonResponse
     {
@@ -426,6 +689,33 @@ class CategoryController extends Controller
 
     /**
      * Merge categories
+     *
+     * @OA\Post(
+     *     path="/api/categories/merge",
+     *     operationId="mergeCategories",
+     *     tags={"Categories"},
+     *     summary="Merge categories",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="source_category_id", type="integer"),
+     *             @OA\Property(property="target_category_id", type="integer"),
+     *             @OA\Property(property="delete_source", type="boolean")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Categories merged successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Category not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function merge(Request $request): JsonResponse
     {
@@ -474,6 +764,23 @@ class CategoryController extends Controller
 
     /**
      * Get default categories for new users
+     *
+     * @OA\Get(
+     *     path="/api/categories/meta/defaults",
+     *     operationId="getDefaultCategories",
+     *     tags={"Categories"},
+     *     summary="Get default categories for new users",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Default categories list",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function getDefaults(): JsonResponse
     {
@@ -487,6 +794,25 @@ class CategoryController extends Controller
 
     /**
      * Create default categories for user
+     *
+     * @OA\Post(
+     *     path="/api/categories/meta/create-defaults",
+     *     operationId="createDefaultCategories",
+     *     tags={"Categories"},
+     *     summary="Create default categories for user",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=201,
+     *         description="Default categories created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CategoryResource"))
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="User already has categories"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function createDefaults(Request $request): JsonResponse
     {

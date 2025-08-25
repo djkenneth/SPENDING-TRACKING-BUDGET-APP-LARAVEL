@@ -27,6 +27,47 @@ class TransactionController extends Controller
 
     /**
      * Get all user transactions with filtering and pagination
+     *
+     * @OA\Get(
+     *     path="/api/transactions",
+     *     operationId="getTransactions",
+     *     tags={"Transactions"},
+     *     summary="Get all user transactions with filtering and pagination",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", minimum=1)),
+     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", minimum=1, maximum=100)),
+     *     @OA\Parameter(name="account_id", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="category_id", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string", enum={"income", "expense", "transfer"})),
+     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="min_amount", in="query", required=false, @OA\Schema(type="number", minimum=0)),
+     *     @OA\Parameter(name="max_amount", in="query", required=false, @OA\Schema(type="number", minimum=0)),
+     *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string", maxLength=255)),
+     *     @OA\Parameter(name="tags[]", in="query", required=false, @OA\Schema(type="array", @OA\Items(type="string"))),
+     *     @OA\Parameter(name="is_cleared", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="is_recurring", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="sort_by", in="query", required=false, @OA\Schema(type="string", enum={"date", "amount", "description", "created_at"})),
+     *     @OA\Parameter(name="sort_direction", in="query", required=false, @OA\Schema(type="string", enum={"asc", "desc"})),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource")),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="from", type="integer"),
+     *                 @OA\Property(property="to", type="integer"),
+     *                 @OA\Property(property="summary", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -83,6 +124,30 @@ class TransactionController extends Controller
 
     /**
      * Create a new transaction
+     *
+     * @OA\Post(
+     *     path="/api/transactions",
+     *     operationId="createTransaction",
+     *     tags={"Transactions"},
+     *     summary="Create a new transaction",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/CreateTransactionRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Transaction created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation Error")
+     * )
      */
     public function store(CreateTransactionRequest $request): JsonResponse
     {
@@ -110,6 +175,25 @@ class TransactionController extends Controller
 
     /**
      * Get specific transaction
+     *
+     * @OA\Get(
+     *     path="/api/transactions/{id}",
+     *     operationId="getTransaction",
+     *     tags={"Transactions"},
+     *     summary="Get specific transaction details",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Transaction not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function show(Request $request, Transaction $transaction): JsonResponse
     {
@@ -131,6 +215,31 @@ class TransactionController extends Controller
 
     /**
      * Update transaction
+     *
+     * @OA\Put(
+     *     path="/api/transactions/{id}",
+     *     operationId="updateTransaction",
+     *     tags={"Transactions"},
+     *     summary="Update transaction",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/UpdateTransactionRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Transaction updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Transaction not found"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation Error")
+     * )
      */
     public function update(UpdateTransactionRequest $request, Transaction $transaction): JsonResponse
     {
@@ -166,6 +275,25 @@ class TransactionController extends Controller
 
     /**
      * Delete transaction
+     *
+     * @OA\Delete(
+     *     path="/api/transactions/{id}",
+     *     operationId="deleteTransaction",
+     *     tags={"Transactions"},
+     *     summary="Delete transaction",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Transaction deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Transaction not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function destroy(Request $request, Transaction $transaction): JsonResponse
     {
@@ -200,6 +328,36 @@ class TransactionController extends Controller
 
     /**
      * Bulk create transactions
+     *
+     * @OA\Post(
+     *     path="/api/transactions/bulk",
+     *     operationId="bulkCreateTransactions",
+     *     tags={"Transactions"},
+     *     summary="Bulk create transactions",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="transactions", type="array",
+     *                 @OA\Items(ref="#/components/schemas/CreateTransactionRequest")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Transactions created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="created_count", type="integer"),
+     *                 @OA\Property(property="transactions", type="array", @OA\Items(ref="#/components/schemas/TransactionResource"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function bulkCreate(BulkCreateTransactionRequest $request): JsonResponse
     {
@@ -230,6 +388,33 @@ class TransactionController extends Controller
 
     /**
      * Bulk delete transactions
+     *
+     * @OA\Delete(
+     *     path="/api/transactions/bulk",
+     *     operationId="bulkDeleteTransactions",
+     *     tags={"Transactions"},
+     *     summary="Bulk delete transactions",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="transaction_ids", type="array", @OA\Items(type="integer"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Transactions deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="deleted_count", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function bulkDelete(BulkDeleteTransactionRequest $request): JsonResponse
     {
@@ -272,6 +457,25 @@ class TransactionController extends Controller
 
     /**
      * Search transactions
+     *
+     * @OA\Get(
+     *     path="/api/transactions/search/query",
+     *     operationId="searchTransactions",
+     *     tags={"Transactions"},
+     *     summary="Search transactions",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="limit", in="query", required=false, @OA\Schema(type="integer", default=20)),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Search results",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function search(Request $request): JsonResponse
     {
@@ -302,6 +506,40 @@ class TransactionController extends Controller
 
     /**
      * Import transactions from CSV
+     *
+     * @OA\Post(
+     *     path="/api/transactions/import/csv",
+     *     operationId="importTransactions",
+     *     tags={"Transactions"},
+     *     summary="Import transactions from CSV file",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="file", type="string", format="binary"),
+     *                 @OA\Property(property="skip_duplicates", type="boolean"),
+     *                 @OA\Property(property="date_format", type="string", default="Y-m-d")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Import results",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="imported", type="integer"),
+     *                 @OA\Property(property="skipped", type="integer"),
+     *                 @OA\Property(property="errors", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function import(ImportTransactionRequest $request): JsonResponse
     {
@@ -332,6 +570,24 @@ class TransactionController extends Controller
 
     /**
      * Export transactions to CSV
+     *
+     * @OA\Get(
+     *     path="/api/transactions/export/data",
+     *     operationId="exportTransactions",
+     *     tags={"Transactions"},
+     *     summary="Export transactions to CSV",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="format", in="query", required=false, @OA\Schema(type="string", enum={"csv", "xlsx"}, default="csv")),
+     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Export file",
+     *         @OA\MediaType(mediaType="text/csv"),
+     *         @OA\MediaType(mediaType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function export(Request $request): JsonResponse
     {
@@ -380,6 +636,34 @@ class TransactionController extends Controller
 
     /**
      * Get transaction statistics
+     *
+     * @OA\Get(
+     *     path="/api/transactions/statistics/summary",
+     *     operationId="getTransactionStatistics",
+     *     tags={"Transactions"},
+     *     summary="Get transaction statistics",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"week", "month", "quarter", "year"})),
+     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Transaction statistics",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="total_income", type="number"),
+     *                 @OA\Property(property="total_expenses", type="number"),
+     *                 @OA\Property(property="net_income", type="number"),
+     *                 @OA\Property(property="transaction_count", type="integer"),
+     *                 @OA\Property(property="average_transaction", type="number"),
+     *                 @OA\Property(property="largest_expense", type="number"),
+     *                 @OA\Property(property="largest_income", type="number")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function statistics(Request $request): JsonResponse
     {
@@ -408,6 +692,24 @@ class TransactionController extends Controller
 
     /**
      * Get recent transactions
+     *
+     * @OA\Get(
+     *     path="/api/transactions/recent/list",
+     *     operationId="getRecentTransactions",
+     *     tags={"Transactions"},
+     *     summary="Get recent transactions",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="limit", in="query", required=false, @OA\Schema(type="integer", default=10, minimum=1, maximum=50)),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recent transactions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function recent(Request $request): JsonResponse
     {
@@ -446,7 +748,7 @@ class TransactionController extends Controller
         if ($request->filled('account_id')) {
             $query->where(function ($q) use ($request) {
                 $q->where('account_id', $request->account_id)
-                  ->orWhere('transfer_account_id', $request->account_id);
+                    ->orWhere('transfer_account_id', $request->account_id);
             });
         }
 
@@ -478,8 +780,8 @@ class TransactionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%")
-                  ->orWhere('reference_number', 'like', "%{$search}%");
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhere('reference_number', 'like', "%{$search}%");
             });
         }
 

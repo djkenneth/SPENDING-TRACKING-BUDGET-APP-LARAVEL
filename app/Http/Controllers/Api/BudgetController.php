@@ -24,6 +24,40 @@ class BudgetController extends Controller
 
     /**
      * Get all user budgets with filtering
+     *
+     * @OA\Get(
+     *     path="/api/budgets",
+     *     operationId="getBudgets",
+     *     tags={"Budgets"},
+     *     summary="Get all user budgets with filtering",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="category_id", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"weekly", "monthly", "yearly"})),
+     *     @OA\Parameter(name="is_active", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="include_inactive", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="sort_by", in="query", required=false, @OA\Schema(type="string", enum={"name", "amount", "spent", "start_date", "created_at"})),
+     *     @OA\Parameter(name="sort_direction", in="query", required=false, @OA\Schema(type="string", enum={"asc", "desc"})),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Budget")),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="active_count", type="integer"),
+     *                 @OA\Property(property="inactive_count", type="integer"),
+     *                 @OA\Property(property="total_budgeted", type="number"),
+     *                 @OA\Property(property="total_spent", type="number"),
+     *                 @OA\Property(property="by_period", type="object"),
+     *                 @OA\Property(property="statistics", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -90,6 +124,30 @@ class BudgetController extends Controller
 
     /**
      * Create a new budget
+     *
+     * @OA\Post(
+     *     path="/api/budgets",
+     *     operationId="createBudget",
+     *     tags={"Budgets"},
+     *     summary="Create a new budget",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/CreateBudgetRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Budget created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Budget")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation Error")
+     * )
      */
     public function store(CreateBudgetRequest $request): JsonResponse
     {
@@ -117,6 +175,30 @@ class BudgetController extends Controller
 
     /**
      * Get specific budget with analysis
+     *
+     * @OA\Get(
+     *     path="/api/budgets/{id}",
+     *     operationId="getBudget",
+     *     tags={"Budgets"},
+     *     summary="Get specific budget with analysis",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", allOf={
+     *                 @OA\Schema(ref="#/components/schemas/Budget"),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="analysis", type="object")
+     *                 )
+     *             })
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Budget not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function show(Request $request, Budget $budget): JsonResponse
     {
@@ -142,6 +224,31 @@ class BudgetController extends Controller
 
     /**
      * Update budget
+     *
+     * @OA\Put(
+     *     path="/api/budgets/{id}",
+     *     operationId="updateBudget",
+     *     tags={"Budgets"},
+     *     summary="Update budget",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/UpdateBudgetRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Budget updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Budget")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Budget not found"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation Error")
+     * )
      */
     public function update(UpdateBudgetRequest $request, Budget $budget): JsonResponse
     {
@@ -177,6 +284,25 @@ class BudgetController extends Controller
 
     /**
      * Delete budget
+     *
+     * @OA\Delete(
+     *     path="/api/budgets/{id}",
+     *     operationId="deleteBudget",
+     *     tags={"Budgets"},
+     *     summary="Delete budget",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Budget deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Budget not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function destroy(Request $request, Budget $budget): JsonResponse
     {
@@ -211,6 +337,32 @@ class BudgetController extends Controller
 
     /**
      * Get current month budgets
+     *
+     * @OA\Get(
+     *     path="/api/budgets/current/month",
+     *     operationId="getCurrentMonthBudgets",
+     *     tags={"Budgets"},
+     *     summary="Get current month budgets with spending",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="category_id", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Current month budgets",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Budget")),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="total_budgeted", type="number"),
+     *                 @OA\Property(property="total_spent", type="number"),
+     *                 @OA\Property(property="remaining", type="number"),
+     *                 @OA\Property(property="percentage_used", type="number"),
+     *                 @OA\Property(property="budgets_count", type="integer"),
+     *                 @OA\Property(property="over_budget_count", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function current(Request $request): JsonResponse
     {
@@ -225,7 +377,7 @@ class BudgetController extends Controller
                 $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
                     // Budget period overlaps with current month
                     $q->where('start_date', '<=', $endOfMonth)
-                      ->where('end_date', '>=', $startOfMonth);
+                        ->where('end_date', '>=', $startOfMonth);
                 });
             })
             ->orderBy('category_id')
@@ -264,6 +416,28 @@ class BudgetController extends Controller
 
     /**
      * Get budget analysis
+     *
+     * @OA\Get(
+     *     path="/api/budgets/{id}/analysis",
+     *     operationId="getBudgetAnalysis",
+     *     tags={"Budgets"},
+     *     summary="Get budget analysis",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"current", "previous", "comparison"})),
+     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Budget analysis data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Budget not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function analysis(Request $request, Budget $budget): JsonResponse
     {
@@ -296,6 +470,35 @@ class BudgetController extends Controller
 
     /**
      * Reset budget for new period
+     *
+     * @OA\Post(
+     *     path="/api/budgets/{id}/reset",
+     *     operationId="resetBudget",
+     *     tags={"Budgets"},
+     *     summary="Reset budget for new period",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="start_date", type="string", format="date"),
+     *             @OA\Property(property="end_date", type="string", format="date"),
+     *             @OA\Property(property="carry_over_unused", type="boolean"),
+     *             @OA\Property(property="reset_spent", type="boolean", default=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Budget reset successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Budget")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Budget not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function reset(Request $request, Budget $budget): JsonResponse
     {
