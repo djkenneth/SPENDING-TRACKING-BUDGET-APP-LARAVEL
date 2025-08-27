@@ -15,6 +15,11 @@ class BillResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $paymentHistory = $this->payment_history ? json_decode($this->payment_history, true) : [];
+        $lastPaidDate = $this->getLastPaidDate($paymentHistory);
+        $totalPaid = $this->calculateTotalPaid($paymentHistory);
+        $paymentCount = count($paymentHistory);
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
@@ -36,12 +41,54 @@ class BillResource extends JsonResource
             'icon' => $this->icon,
             'notes' => $this->notes,
             'payment_history' => $this->payment_history,
-            'payment_count' => count($this->payment_history ?? []),
+            'is_overdue' => $this->isOverdue(),
+            'last_paid_date' => $lastPaidDate,
+            'total_paid' => $totalPaid,
+            'payment_count' => $paymentCount,
             'last_payment' => $this->getLastPayment(),
             'next_due_amount' => $this->getNextDueAmount(),
+            'next_due_date' => $this->getNextDueDate(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+    }
+
+    /**
+     * Get the next due date for recurring bills
+     */
+    private function getNextDueDate(): ?string
+    {
+        if (!$this->is_recurring) {
+            return $this->due_date->format('Y-m-d');
+        }
+
+        $dueDate = $this->due_date->copy();
+        $now = now();
+
+        while ($dueDate->isPast()) {
+            switch ($this->frequency) {
+                case 'weekly':
+                    $dueDate->addWeek();
+                    break;
+                case 'bi-weekly':
+                    $dueDate->addWeeks(2);
+                    break;
+                case 'monthly':
+                    $dueDate->addMonth();
+                    break;
+                case 'quarterly':
+                    $dueDate->addMonths(3);
+                    break;
+                case 'semi-annually':
+                    $dueDate->addMonths(6);
+                    break;
+                case 'annually':
+                    $dueDate->addYear();
+                    break;
+            }
+        }
+
+        return $dueDate->format('Y-m-d');
     }
 
     /**
@@ -53,6 +100,15 @@ class BillResource extends JsonResource
         $symbol = $user ? $user->getCurrencySymbol() : '$';
 
         return $symbol . number_format($this->amount, 2);
+    }
+
+    /**
+     * Check if bill is overdue
+     */
+    private function isOverdue(): bool
+    {
+        return $this->status === 'overdue' ||
+               ($this->status === 'active' && $this->due_date->isPast());
     }
 
     /**
@@ -72,6 +128,36 @@ class BillResource extends JsonResource
         }
 
         return $dueDate->diffInDays($today);
+    }
+
+    /**
+     * Get last paid date from payment history
+     */
+    private function getLastPaidDate(?array $paymentHistory): ?string
+    {
+        if (empty($paymentHistory)) {
+            return null;
+        }
+
+        $dates = array_column($paymentHistory, 'date');
+        if (empty($dates)) {
+            return null;
+        }
+
+        rsort($dates);
+        return $dates[0];
+    }
+
+    /**
+     * Calculate total paid from payment history
+     */
+    private function calculateTotalPaid(?array $paymentHistory): float
+    {
+        if (empty($paymentHistory)) {
+            return 0.0;
+        }
+
+        return array_sum(array_column($paymentHistory, 'amount'));
     }
 
     /**

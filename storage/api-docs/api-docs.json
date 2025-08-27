@@ -2194,6 +2194,605 @@
                 ]
             }
         },
+        "/api/bills": {
+            "get": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Get list of bills",
+                "description": "Get all user bills with filtering and pagination",
+                "operationId": "e049f711bebde336193ecbd1cbb7d993",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "paid",
+                                "overdue",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "frequency",
+                        "in": "query",
+                        "description": "Filter by frequency",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "monthly",
+                                "weekly",
+                                "quarterly",
+                                "annually"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort field",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "amount",
+                                "due_date",
+                                "status"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bills retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BillResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Create a new bill",
+                "description": "Create a new bill",
+                "operationId": "aa6d8159ba951369b80cf4d40d5254f9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "amount",
+                                    "due_date",
+                                    "frequency",
+                                    "category_id"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "frequency": {
+                                        "type": "string",
+                                        "enum": [
+                                            "monthly",
+                                            "weekly",
+                                            "quarterly",
+                                            "annually"
+                                        ]
+                                    },
+                                    "reminder_days": {
+                                        "type": "integer",
+                                        "default": 3
+                                    },
+                                    "is_recurring": {
+                                        "type": "boolean",
+                                        "default": true
+                                    },
+                                    "color": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Bill created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/BillResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bills/{id}": {
+            "get": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Get a specific bill",
+                "description": "Get a specific bill",
+                "operationId": "4f2af7e00bd4ea08b689fda375bab2d4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bill ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bill retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/BillResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Bill not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Update a bill",
+                "description": "Update a bill",
+                "operationId": "92701970b87ceeeddd7cc5655140b577",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bill ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateBillRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bill updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Delete a bill",
+                "description": "Delete a bill",
+                "operationId": "1d3fab5897de74e91fb1063013e00f65",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bill ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bill deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bills/{id}/pay": {
+            "post": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Mark a bill as paid",
+                "description": "Mark a bill as paid",
+                "operationId": "f8450a6fa8820678ff5039dbf44d9046",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bill ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount",
+                                    "payment_date"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "payment_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    },
+                                    "create_transaction": {
+                                        "type": "boolean",
+                                        "default": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bill marked as paid successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bills/status/upcoming": {
+            "get": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Get upcoming bills",
+                "description": "Get upcoming bills",
+                "operationId": "8841ceee9bddb267dab5ceea930e2c8e",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Number of days to look ahead",
+                        "schema": {
+                            "type": "integer",
+                            "default": 7
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upcoming bills retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bills/status/overdue": {
+            "get": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Get overdue bills",
+                "description": "Get overdue bills",
+                "operationId": "e9cc7ef2e0bd9befc8d84614e93478e7",
+                "responses": {
+                    "200": {
+                        "description": "Overdue bills retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bills/{id}/payment-history": {
+            "get": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Get payment history for a bill",
+                "description": "Get bill payment history",
+                "operationId": "6aff8c6c8e07b1b84c952f0771e7d612",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bill ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for history",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for history",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Limit number of results",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment history retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total_payments": {
+                                                    "type": "integer"
+                                                },
+                                                "total_amount_paid": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bills/analytics/statistics": {
+            "get": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Get bill statistics",
+                "description": "Get bill statistics",
+                "operationId": "e8bb450ac8dece0b5592c2a18a4a0d08",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Statistics period",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bill statistics retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bills/{id}/duplicate": {
+            "post": {
+                "tags": [
+                    "Bills"
+                ],
+                "summary": "Duplicate a bill",
+                "description": "Duplicate a bill for creating similar ones",
+                "operationId": "ad4aa6b0ea5605d61c5f006ed6773ea2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Bill ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Bill duplicated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/budgets": {
             "get": {
                 "tags": [
@@ -3783,6 +4382,1280 @@
                 "security": [
                     {
                         "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/debts": {
+            "get": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Get list of debts",
+                "description": "Get all user debts with filtering and pagination",
+                "operationId": "db02cf9efab46d2448020de570b6b6b3",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter by debt type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "paid_off",
+                                "closed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort field",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "current_balance",
+                                "interest_rate",
+                                "minimum_payment",
+                                "due_date"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Debts retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DebtResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Create a new debt",
+                "description": "Create a new debt",
+                "operationId": "500be8eb81582c5ff82fa5991dd6a9ee",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type",
+                                    "original_balance",
+                                    "current_balance",
+                                    "interest_rate",
+                                    "minimum_payment",
+                                    "due_date",
+                                    "payment_frequency"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "credit_card",
+                                            "personal_loan",
+                                            "mortgage",
+                                            "auto_loan",
+                                            "student_loan"
+                                        ]
+                                    },
+                                    "original_balance": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "current_balance": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "interest_rate": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "minimum_payment": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "payment_frequency": {
+                                        "type": "string",
+                                        "enum": [
+                                            "monthly",
+                                            "weekly",
+                                            "bi-weekly"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "default": "active",
+                                        "enum": [
+                                            "active",
+                                            "paid_off",
+                                            "closed"
+                                        ]
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Debt created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/DebtResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/debts/{id}": {
+            "get": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Get a specific debt",
+                "description": "Get a specific debt",
+                "operationId": "54e929e2f8c9527dd45a75fddf38a2c5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debt ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Debt retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/DebtResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Debt not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Update a debt",
+                "description": "Update a debt",
+                "operationId": "41869a7678b3b2bbd2c866142e9c5493",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debt ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateDebtRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Debt updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Delete a debt",
+                "description": "Delete a debt",
+                "operationId": "f84f16bf8eaf35bced9b27b1c18232d4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debt ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Debt deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/debts/{id}/payment": {
+            "post": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Record a debt payment",
+                "description": "Record a debt payment",
+                "operationId": "f63a92d47140b4b6754961b66ee78a85",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debt ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount",
+                                    "payment_date"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "payment_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payment recorded successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/debts/{id}/payoff-schedule": {
+            "get": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Get payoff schedule for a debt",
+                "description": "Get debt payoff schedule",
+                "operationId": "9450816166dba7c5225df5d82b4d6169",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debt ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "extra_payment",
+                        "in": "query",
+                        "description": "Extra payment amount",
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payoff schedule retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/debts/summary": {
+            "get": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Get debts summary statistics",
+                "description": "Get debt summary statistics",
+                "operationId": "8733fe2905bb7a214102e052b90f1acd",
+                "responses": {
+                    "200": {
+                        "description": "Debts summary retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_debt": {
+                                                    "type": "number"
+                                                },
+                                                "monthly_payments": {
+                                                    "type": "number"
+                                                },
+                                                "average_interest_rate": {
+                                                    "type": "number"
+                                                },
+                                                "debts_by_type": {
+                                                    "type": "object"
+                                                },
+                                                "active_debts_count": {
+                                                    "type": "integer"
+                                                },
+                                                "paid_off_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/debts/{id}/payment-history": {
+            "get": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Get payment history for a debt",
+                "description": "Get payment history for a debt",
+                "operationId": "06632144802cb0f58ac1025eb9783bd6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debt ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment history retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/debts/{id}/mark-paid-off": {
+            "post": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Mark a debt as paid off",
+                "description": "Mark debt as paid off",
+                "operationId": "020cce1e8fe434d1793eaebc7e7f3e75",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Debt ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Debt marked as paid off successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/debts/types": {
+            "get": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Get available debt types",
+                "description": "Get debt types with their configurations",
+                "operationId": "4b9adcd5821a55db135f3e3d0391393e",
+                "responses": {
+                    "200": {
+                        "description": "Debt types retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "credit_card",
+                                                    "personal_loan",
+                                                    "mortgage",
+                                                    "auto_loan",
+                                                    "student_loan",
+                                                    "other"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/debts/consolidation-options": {
+            "post": {
+                "tags": [
+                    "Debts"
+                ],
+                "summary": "Get debt consolidation options",
+                "description": "Calculate debt consolidation options",
+                "operationId": "1150b6f0225449a35362eb60d4e804b8",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "debt_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "consolidation_rate": {
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Consolidation options calculated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/goals": {
+            "get": {
+                "tags": [
+                    "Financial Goals"
+                ],
+                "summary": "Get list of financial goals",
+                "description": "Get all financial goals",
+                "operationId": "5ec294882c5155834d15b3d90ccd4603",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status (active, completed, paused, cancelled)",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "completed",
+                                "paused",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "description": "Filter by priority (high, medium, low)",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "high",
+                                "medium",
+                                "low"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort field",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "target_amount",
+                                "current_amount",
+                                "target_date",
+                                "priority",
+                                "created_at",
+                                "progress_percentage"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort order",
+                        "schema": {
+                            "type": "string",
+                            "default": "asc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of financial goals retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/FinancialGoalResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "active_goals": {
+                                                    "type": "integer"
+                                                },
+                                                "completed_goals": {
+                                                    "type": "integer"
+                                                },
+                                                "total_target_amount": {
+                                                    "type": "number"
+                                                },
+                                                "total_current_amount": {
+                                                    "type": "number"
+                                                },
+                                                "overall_progress": {
+                                                    "type": "number"
+                                                },
+                                                "currency": {
+                                                    "type": "string"
+                                                },
+                                                "currency_symbol": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Financial Goals"
+                ],
+                "summary": "Create a new financial goal",
+                "description": "Create new financial goal",
+                "operationId": "2d36262d3814a04130a4807b6d25efc8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "target_amount",
+                                    "target_date",
+                                    "priority"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "target_amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "current_amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "default": 0,
+                                        "minimum": 0
+                                    },
+                                    "target_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "enum": [
+                                            "high",
+                                            "medium",
+                                            "low"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "default": "active",
+                                        "enum": [
+                                            "active",
+                                            "completed",
+                                            "paused",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "default": "#2196F3"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "default": "flag"
+                                    },
+                                    "monthly_target": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "milestone_settings": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Financial goal created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FinancialGoalResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/goals/{id}": {
+            "get": {
+                "tags": [
+                    "Financial Goals"
+                ],
+                "summary": "Get a specific financial goal",
+                "description": "Get specific financial goal",
+                "operationId": "10aa64bb2d335bcd8cbfa6652ed8f119",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Financial goal ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Financial goal retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FinancialGoalResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized access"
+                    },
+                    "404": {
+                        "description": "Goal not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Financial Goals"
+                ],
+                "summary": "Update a financial goal",
+                "description": "Update financial goal",
+                "operationId": "4bf7e3fd936387abd583f773f49e370b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Financial goal ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "target_amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "current_amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "target_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "enum": [
+                                            "high",
+                                            "medium",
+                                            "low"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "completed",
+                                            "paused",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "color": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "monthly_target": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "milestone_settings": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Financial goal updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FinancialGoalResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized access"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Financial Goals"
+                ],
+                "summary": "Delete a financial goal",
+                "description": "Delete financial goal",
+                "operationId": "4d012534376eff48e3cd298e7f09007f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Financial goal ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Financial goal deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "deleted_goal_id": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized access"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/goals/{id}/contribute": {
+            "post": {
+                "tags": [
+                    "Financial Goals"
+                ],
+                "summary": "Add contribution to a financial goal",
+                "description": "Add money to goal (contribute)",
+                "operationId": "359bca705d82b4b6e74c27d7c98650bf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Financial goal ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0.01
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    },
+                                    "transaction_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Contribution added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FinancialGoalResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/goals/{id}/progress": {
+            "get": {
+                "tags": [
+                    "Financial Goals"
+                ],
+                "summary": "Get detailed progress of a financial goal",
+                "description": "Get goal progress details",
+                "operationId": "b7e06c9a14891bc65a3494f0606dffb6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Financial goal ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Goal progress retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "goal": {
+                                                    "$ref": "#/components/schemas/FinancialGoalResource"
+                                                },
+                                                "progress": {
+                                                    "type": "object"
+                                                },
+                                                "projections": {
+                                                    "type": "object"
+                                                },
+                                                "milestones": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/goals/{id}/complete": {
+            "post": {
+                "tags": [
+                    "Financial Goals"
+                ],
+                "summary": "Mark a financial goal as completed",
+                "description": "Mark goal as completed",
+                "operationId": "d06521e1e0e959b0d3dd232c0b189359",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Financial goal ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Goal marked as completed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FinancialGoalResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Goal already completed"
+                    },
+                    "403": {
+                        "description": "Unauthorized access"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
                     }
                 ]
             }
@@ -6310,6 +8183,611 @@
                 },
                 "type": "object"
             },
+            "BillResource": {
+                "title": "Bill Resource",
+                "description": "Bill resource representation",
+                "properties": {
+                    "id": {
+                        "description": "Bill ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "description": "User ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "description": "Category ID",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "name": {
+                        "description": "Bill name",
+                        "type": "string",
+                        "example": "Netflix Subscription"
+                    },
+                    "amount": {
+                        "description": "Bill amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 15.99
+                    },
+                    "due_date": {
+                        "description": "Bill due date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-02-15"
+                    },
+                    "frequency": {
+                        "description": "Payment frequency",
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "bi-weekly",
+                            "monthly",
+                            "quarterly",
+                            "semi-annually",
+                            "annually"
+                        ],
+                        "example": "monthly"
+                    },
+                    "reminder_days": {
+                        "description": "Days before due date to send reminder",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "status": {
+                        "description": "Bill status",
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "paid",
+                            "overdue",
+                            "cancelled"
+                        ],
+                        "example": "active"
+                    },
+                    "is_recurring": {
+                        "description": "Whether the bill is recurring",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "color": {
+                        "description": "Bill color for UI display",
+                        "type": "string",
+                        "example": "#2196F3"
+                    },
+                    "icon": {
+                        "description": "Bill icon identifier",
+                        "type": "string",
+                        "example": "receipt"
+                    },
+                    "notes": {
+                        "description": "Additional notes about the bill",
+                        "type": "string",
+                        "example": "Includes family plan with 4 screens",
+                        "nullable": true
+                    },
+                    "payment_history": {
+                        "description": "History of payments for this bill",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2025-01-15"
+                                },
+                                "amount": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 15.99
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "example": "paid"
+                                },
+                                "transaction_id": {
+                                    "type": "integer",
+                                    "example": 123,
+                                    "nullable": true
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "nullable": true
+                    },
+                    "category": {
+                        "$ref": "#/components/schemas/CategoryResource"
+                    },
+                    "next_due_date": {
+                        "description": "Next calculated due date for recurring bills",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-03-15"
+                    },
+                    "days_until_due": {
+                        "description": "Number of days until the bill is due",
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "is_overdue": {
+                        "description": "Whether the bill is currently overdue",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "last_paid_date": {
+                        "description": "Date when the bill was last paid",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15",
+                        "nullable": true
+                    },
+                    "total_paid": {
+                        "description": "Total amount paid for this bill historically",
+                        "type": "number",
+                        "format": "float",
+                        "example": 159.9
+                    },
+                    "payment_count": {
+                        "description": "Number of times this bill has been paid",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T12:30:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "CreateBillRequest": {
+                "title": "Create Bill Request",
+                "required": [
+                    "name",
+                    "amount",
+                    "due_date",
+                    "frequency",
+                    "category_id"
+                ],
+                "properties": {
+                    "name": {
+                        "description": "Bill name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Netflix Subscription"
+                    },
+                    "category_id": {
+                        "description": "Category ID",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "amount": {
+                        "description": "Bill amount",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 15.99
+                    },
+                    "due_date": {
+                        "description": "Bill due date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-02-15"
+                    },
+                    "frequency": {
+                        "description": "Payment frequency",
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "bi-weekly",
+                            "monthly",
+                            "quarterly",
+                            "semi-annually",
+                            "annually"
+                        ],
+                        "example": "monthly"
+                    },
+                    "reminder_days": {
+                        "description": "Days before due date to send reminder",
+                        "type": "integer",
+                        "default": 3,
+                        "maximum": 30,
+                        "minimum": 0,
+                        "example": 3
+                    },
+                    "is_recurring": {
+                        "description": "Whether the bill is recurring",
+                        "type": "boolean",
+                        "default": true,
+                        "example": true
+                    },
+                    "color": {
+                        "description": "Bill color for UI display",
+                        "type": "string",
+                        "default": "#2196F3",
+                        "example": "#FF5722"
+                    },
+                    "icon": {
+                        "description": "Bill icon identifier",
+                        "type": "string",
+                        "default": "receipt",
+                        "example": "streaming"
+                    },
+                    "notes": {
+                        "description": "Additional notes about the bill",
+                        "type": "string",
+                        "example": "Includes family plan with 4 screens",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateBillRequest": {
+                "title": "Update Bill Request",
+                "properties": {
+                    "name": {
+                        "description": "Bill name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Netflix Premium"
+                    },
+                    "category_id": {
+                        "description": "Category ID",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "amount": {
+                        "description": "Bill amount",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 19.99
+                    },
+                    "due_date": {
+                        "description": "Bill due date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-02-20"
+                    },
+                    "frequency": {
+                        "description": "Payment frequency",
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "bi-weekly",
+                            "monthly",
+                            "quarterly",
+                            "semi-annually",
+                            "annually"
+                        ],
+                        "example": "monthly"
+                    },
+                    "reminder_days": {
+                        "description": "Days before due date to send reminder",
+                        "type": "integer",
+                        "maximum": 30,
+                        "minimum": 0,
+                        "example": 5
+                    },
+                    "status": {
+                        "description": "Bill status",
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "paid",
+                            "overdue",
+                            "cancelled"
+                        ],
+                        "example": "active"
+                    },
+                    "is_recurring": {
+                        "description": "Whether the bill is recurring",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "color": {
+                        "description": "Bill color for UI display",
+                        "type": "string",
+                        "example": "#4CAF50"
+                    },
+                    "icon": {
+                        "description": "Bill icon identifier",
+                        "type": "string",
+                        "example": "entertainment"
+                    },
+                    "notes": {
+                        "description": "Additional notes about the bill",
+                        "type": "string",
+                        "example": "Upgraded to premium plan",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "MarkAsPaidRequest": {
+                "title": "Mark Bill As Paid Request",
+                "required": [
+                    "amount",
+                    "payment_date"
+                ],
+                "properties": {
+                    "amount": {
+                        "description": "Payment amount",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 15.99
+                    },
+                    "payment_date": {
+                        "description": "Date of payment",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15"
+                    },
+                    "notes": {
+                        "description": "Payment notes",
+                        "type": "string",
+                        "example": "Paid via credit card",
+                        "nullable": true
+                    },
+                    "create_transaction": {
+                        "description": "Whether to create a transaction record",
+                        "type": "boolean",
+                        "default": true,
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "BillCollection": {
+                "title": "Bill Collection",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BillResource"
+                        }
+                    },
+                    "meta": {
+                        "properties": {
+                            "current_page": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "from": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "last_page": {
+                                "type": "integer",
+                                "example": 5
+                            },
+                            "per_page": {
+                                "type": "integer",
+                                "example": 15
+                            },
+                            "to": {
+                                "type": "integer",
+                                "example": 15
+                            },
+                            "total": {
+                                "type": "integer",
+                                "example": 75
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "summary": {
+                        "properties": {
+                            "total_monthly": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 450.5
+                            },
+                            "total_upcoming": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 150
+                            },
+                            "total_overdue": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 45.99
+                            },
+                            "active_bills_count": {
+                                "type": "integer",
+                                "example": 8
+                            },
+                            "overdue_bills_count": {
+                                "type": "integer",
+                                "example": 2
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "BillStatistics": {
+                "title": "Bill Statistics",
+                "properties": {
+                    "period": {
+                        "description": "Statistics period",
+                        "type": "string",
+                        "example": "month"
+                    },
+                    "total_bills": {
+                        "description": "Total number of bills",
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "total_amount": {
+                        "description": "Total amount for all bills",
+                        "type": "number",
+                        "format": "float",
+                        "example": 750.5
+                    },
+                    "paid_amount": {
+                        "description": "Total paid amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 500
+                    },
+                    "pending_amount": {
+                        "description": "Total pending amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 250.5
+                    },
+                    "overdue_amount": {
+                        "description": "Total overdue amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 45.99
+                    },
+                    "bills_by_status": {
+                        "properties": {
+                            "active": {
+                                "type": "integer",
+                                "example": 8
+                            },
+                            "paid": {
+                                "type": "integer",
+                                "example": 5
+                            },
+                            "overdue": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "cancelled": {
+                                "type": "integer",
+                                "example": 0
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "bills_by_frequency": {
+                        "properties": {
+                            "monthly": {
+                                "type": "integer",
+                                "example": 10
+                            },
+                            "weekly": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "quarterly": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "annually": {
+                                "type": "integer",
+                                "example": 1
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "bills_by_category": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "category_id": {
+                                    "type": "integer",
+                                    "example": 5
+                                },
+                                "category_name": {
+                                    "type": "string",
+                                    "example": "Entertainment"
+                                },
+                                "count": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "total_amount": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 45.97
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "average_bill_amount": {
+                        "description": "Average bill amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 50.03
+                    },
+                    "payment_completion_rate": {
+                        "description": "Percentage of bills paid on time",
+                        "type": "number",
+                        "format": "float",
+                        "example": 85.5
+                    }
+                },
+                "type": "object"
+            },
+            "BillPaymentHistory": {
+                "title": "Bill Payment History",
+                "properties": {
+                    "payment_id": {
+                        "description": "Payment ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "bill_id": {
+                        "description": "Bill ID",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "amount": {
+                        "description": "Payment amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 15.99
+                    },
+                    "payment_date": {
+                        "description": "Date of payment",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15"
+                    },
+                    "status": {
+                        "description": "Payment status",
+                        "type": "string",
+                        "example": "completed"
+                    },
+                    "transaction_id": {
+                        "description": "Associated transaction ID",
+                        "type": "integer",
+                        "example": 123,
+                        "nullable": true
+                    },
+                    "notes": {
+                        "description": "Payment notes",
+                        "type": "string",
+                        "example": "Paid via bank transfer",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Payment record creation time",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T10:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
             "Budget": {
                 "title": "Budget",
                 "description": "Budget model",
@@ -7589,6 +10067,1116 @@
                             }
                         },
                         "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "DebtResource": {
+                "title": "Debt Resource",
+                "description": "Debt resource representation",
+                "properties": {
+                    "id": {
+                        "description": "Debt ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "description": "User ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Debt name",
+                        "type": "string",
+                        "example": "Chase Credit Card"
+                    },
+                    "type": {
+                        "description": "Type of debt",
+                        "type": "string",
+                        "enum": [
+                            "credit_card",
+                            "personal_loan",
+                            "mortgage",
+                            "auto_loan",
+                            "student_loan"
+                        ],
+                        "example": "credit_card"
+                    },
+                    "type_label": {
+                        "description": "Human-readable debt type",
+                        "type": "string",
+                        "example": "Credit Card"
+                    },
+                    "original_balance": {
+                        "description": "Original debt balance",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5000
+                    },
+                    "current_balance": {
+                        "description": "Current debt balance",
+                        "type": "number",
+                        "format": "float",
+                        "example": 3500
+                    },
+                    "paid_amount": {
+                        "description": "Amount paid so far",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500
+                    },
+                    "progress_percentage": {
+                        "description": "Percentage of debt paid off",
+                        "type": "number",
+                        "format": "float",
+                        "example": 30
+                    },
+                    "interest_rate": {
+                        "description": "Annual interest rate percentage",
+                        "type": "number",
+                        "format": "float",
+                        "example": 18.99
+                    },
+                    "minimum_payment": {
+                        "description": "Minimum monthly payment",
+                        "type": "number",
+                        "format": "float",
+                        "example": 125
+                    },
+                    "due_date": {
+                        "description": "Monthly due date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-02-15"
+                    },
+                    "days_until_due": {
+                        "description": "Days until next due date",
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "payment_frequency": {
+                        "description": "Payment frequency",
+                        "type": "string",
+                        "enum": [
+                            "monthly",
+                            "weekly",
+                            "bi-weekly"
+                        ],
+                        "example": "monthly"
+                    },
+                    "payment_frequency_label": {
+                        "description": "Human-readable payment frequency",
+                        "type": "string",
+                        "example": "Monthly"
+                    },
+                    "status": {
+                        "description": "Debt status",
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "paid_off",
+                            "closed"
+                        ],
+                        "example": "active"
+                    },
+                    "status_label": {
+                        "description": "Human-readable status",
+                        "type": "string",
+                        "example": "Active"
+                    },
+                    "is_overdue": {
+                        "description": "Whether payment is overdue",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "notes": {
+                        "description": "Additional notes",
+                        "type": "string",
+                        "example": "Balance transfer from another card",
+                        "nullable": true
+                    },
+                    "payments": {
+                        "description": "Payment history",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DebtPaymentResource"
+                        }
+                    },
+                    "latest_payment": {
+                        "$ref": "#/components/schemas/DebtPaymentResource"
+                    },
+                    "total_payments": {
+                        "properties": {
+                            "count": {
+                                "type": "integer",
+                                "example": 12
+                            },
+                            "total_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 1500
+                            },
+                            "total_principal": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 1200
+                            },
+                            "total_interest": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 300
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "estimated_payoff": {
+                        "properties": {
+                            "months_remaining": {
+                                "type": "integer",
+                                "example": 28
+                            },
+                            "payoff_date": {
+                                "type": "string",
+                                "format": "date",
+                                "example": "2027-06-15"
+                            },
+                            "total_interest": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 850
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T12:30:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "DebtPaymentResource": {
+                "title": "Debt Payment Resource",
+                "description": "Debt payment record",
+                "properties": {
+                    "id": {
+                        "description": "Payment ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "debt_id": {
+                        "description": "Associated debt ID",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "transaction_id": {
+                        "description": "Associated transaction ID",
+                        "type": "integer",
+                        "example": 123,
+                        "nullable": true
+                    },
+                    "amount": {
+                        "description": "Total payment amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 150
+                    },
+                    "principal": {
+                        "description": "Principal portion of payment",
+                        "type": "number",
+                        "format": "float",
+                        "example": 120
+                    },
+                    "interest": {
+                        "description": "Interest portion of payment",
+                        "type": "number",
+                        "format": "float",
+                        "example": 30
+                    },
+                    "payment_date": {
+                        "description": "Date of payment",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15"
+                    },
+                    "notes": {
+                        "description": "Payment notes",
+                        "type": "string",
+                        "example": "Extra payment toward principal",
+                        "nullable": true
+                    },
+                    "transaction": {
+                        "$ref": "#/components/schemas/TransactionResource"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T10:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T10:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "CreateDebtRequest": {
+                "title": "Create Debt Request",
+                "required": [
+                    "name",
+                    "type",
+                    "original_balance",
+                    "current_balance",
+                    "interest_rate",
+                    "minimum_payment",
+                    "due_date",
+                    "payment_frequency"
+                ],
+                "properties": {
+                    "name": {
+                        "description": "Debt name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Chase Sapphire Credit Card"
+                    },
+                    "type": {
+                        "description": "Type of debt",
+                        "type": "string",
+                        "enum": [
+                            "credit_card",
+                            "personal_loan",
+                            "mortgage",
+                            "auto_loan",
+                            "student_loan"
+                        ],
+                        "example": "credit_card"
+                    },
+                    "original_balance": {
+                        "description": "Original debt amount",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 5000
+                    },
+                    "current_balance": {
+                        "description": "Current balance",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 3500
+                    },
+                    "interest_rate": {
+                        "description": "Annual interest rate percentage",
+                        "type": "number",
+                        "format": "float",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 18.99
+                    },
+                    "minimum_payment": {
+                        "description": "Minimum monthly payment",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 125
+                    },
+                    "due_date": {
+                        "description": "Monthly due date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-02-15"
+                    },
+                    "payment_frequency": {
+                        "description": "Payment frequency",
+                        "type": "string",
+                        "enum": [
+                            "monthly",
+                            "weekly",
+                            "bi-weekly"
+                        ],
+                        "example": "monthly"
+                    },
+                    "status": {
+                        "description": "Debt status",
+                        "type": "string",
+                        "default": "active",
+                        "enum": [
+                            "active",
+                            "paid_off",
+                            "closed"
+                        ],
+                        "example": "active"
+                    },
+                    "notes": {
+                        "description": "Additional notes",
+                        "type": "string",
+                        "example": "0% APR until March 2025",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateDebtRequest": {
+                "title": "Update Debt Request",
+                "properties": {
+                    "name": {
+                        "description": "Debt name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Chase Freedom Credit Card"
+                    },
+                    "type": {
+                        "description": "Type of debt",
+                        "type": "string",
+                        "enum": [
+                            "credit_card",
+                            "personal_loan",
+                            "mortgage",
+                            "auto_loan",
+                            "student_loan"
+                        ],
+                        "example": "credit_card"
+                    },
+                    "original_balance": {
+                        "description": "Original debt amount",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 5000
+                    },
+                    "current_balance": {
+                        "description": "Current balance",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 2800
+                    },
+                    "interest_rate": {
+                        "description": "Annual interest rate percentage",
+                        "type": "number",
+                        "format": "float",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 16.99
+                    },
+                    "minimum_payment": {
+                        "description": "Minimum monthly payment",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 100
+                    },
+                    "due_date": {
+                        "description": "Monthly due date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-02-20"
+                    },
+                    "payment_frequency": {
+                        "description": "Payment frequency",
+                        "type": "string",
+                        "enum": [
+                            "monthly",
+                            "weekly",
+                            "bi-weekly"
+                        ],
+                        "example": "monthly"
+                    },
+                    "status": {
+                        "description": "Debt status",
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "paid_off",
+                            "closed"
+                        ],
+                        "example": "active"
+                    },
+                    "notes": {
+                        "description": "Additional notes",
+                        "type": "string",
+                        "example": "Planning to pay off by end of year",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RecordPaymentRequest": {
+                "title": "Record Debt Payment Request",
+                "required": [
+                    "amount",
+                    "payment_date"
+                ],
+                "properties": {
+                    "amount": {
+                        "description": "Payment amount",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0,
+                        "example": 200
+                    },
+                    "payment_date": {
+                        "description": "Date of payment",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15"
+                    },
+                    "notes": {
+                        "description": "Payment notes",
+                        "type": "string",
+                        "example": "Extra $75 toward principal",
+                        "nullable": true
+                    },
+                    "create_transaction": {
+                        "description": "Whether to create a transaction record",
+                        "type": "boolean",
+                        "default": true,
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "DebtSummary": {
+                "title": "Debt Summary",
+                "description": "Summary statistics for all debts",
+                "properties": {
+                    "total_debts": {
+                        "description": "Number of active debts",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "total_original_balance": {
+                        "description": "Sum of all original balances",
+                        "type": "number",
+                        "format": "float",
+                        "example": 25000
+                    },
+                    "total_current_balance": {
+                        "description": "Sum of all current balances",
+                        "type": "number",
+                        "format": "float",
+                        "example": 18500
+                    },
+                    "total_paid_off": {
+                        "description": "Total amount paid off",
+                        "type": "number",
+                        "format": "float",
+                        "example": 6500
+                    },
+                    "average_interest_rate": {
+                        "description": "Average interest rate across all debts",
+                        "type": "number",
+                        "format": "float",
+                        "example": 15.75
+                    },
+                    "total_minimum_payment": {
+                        "description": "Sum of all minimum payments",
+                        "type": "number",
+                        "format": "float",
+                        "example": 650
+                    },
+                    "debts_by_type": {
+                        "description": "Breakdown by debt type",
+                        "type": "object",
+                        "additionalProperties": {
+                            "properties": {
+                                "count": {
+                                    "type": "integer",
+                                    "example": 2
+                                },
+                                "total_balance": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 8500
+                                },
+                                "average_interest_rate": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 18.99
+                                },
+                                "total_minimum_payment": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 250
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "highest_interest_debt": {
+                        "$ref": "#/components/schemas/DebtResource"
+                    },
+                    "largest_balance_debt": {
+                        "$ref": "#/components/schemas/DebtResource"
+                    },
+                    "next_due_debt": {
+                        "$ref": "#/components/schemas/DebtResource"
+                    },
+                    "progress_percentage": {
+                        "description": "Overall debt payoff progress",
+                        "type": "number",
+                        "format": "float",
+                        "example": 26
+                    },
+                    "estimated_payoff_date": {
+                        "description": "Estimated date when all debts will be paid off",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2027-12-15",
+                        "nullable": true
+                    },
+                    "estimated_total_interest": {
+                        "description": "Estimated total interest to be paid",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4850
+                    },
+                    "recent_payments": {
+                        "description": "Recent payment history",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DebtPaymentResource"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "DebtPayoffSchedule": {
+                "title": "Debt Payoff Schedule",
+                "description": "Detailed payoff schedule for a debt",
+                "properties": {
+                    "debt": {
+                        "$ref": "#/components/schemas/DebtResource"
+                    },
+                    "summary": {
+                        "properties": {
+                            "months_to_payoff": {
+                                "type": "integer",
+                                "example": 36
+                            },
+                            "payoff_date": {
+                                "type": "string",
+                                "format": "date",
+                                "example": "2028-01-15"
+                            },
+                            "total_payments": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 4500
+                            },
+                            "total_interest_paid": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 1000
+                            },
+                            "monthly_payment": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 125
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "schedule": {
+                        "description": "Monthly payment breakdown",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "payment_number": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2025-02-15"
+                                },
+                                "beginning_balance": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 3500
+                                },
+                                "payment": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 125
+                                },
+                                "principal": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 70
+                                },
+                                "interest": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 55
+                                },
+                                "ending_balance": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 3430
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "extra_payment_scenario": {
+                        "description": "Scenario with extra payments",
+                        "properties": {
+                            "extra_payment_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 50
+                            },
+                            "months_saved": {
+                                "type": "integer",
+                                "example": 12
+                            },
+                            "interest_saved": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 350
+                            },
+                            "new_payoff_date": {
+                                "type": "string",
+                                "format": "date",
+                                "example": "2027-01-15"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "DebtConsolidationOptions": {
+                "title": "Debt Consolidation Options",
+                "description": "Analysis of debt consolidation scenarios",
+                "properties": {
+                    "current_situation": {
+                        "properties": {
+                            "total_balance": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 18500
+                            },
+                            "total_minimum_payment": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 650
+                            },
+                            "average_interest_rate": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 15.75
+                            },
+                            "number_of_debts": {
+                                "type": "integer",
+                                "example": 5
+                            },
+                            "debt_types": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "credit_card"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "consolidation_options": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "loan_term_months": {
+                                    "type": "integer",
+                                    "example": 36
+                                },
+                                "loan_term_years": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 3
+                                },
+                                "interest_rate": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 12
+                                },
+                                "monthly_payment": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 615
+                                },
+                                "total_payment": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 22140
+                                },
+                                "total_interest": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 3640
+                                },
+                                "savings": {
+                                    "properties": {
+                                        "monthly_payment_difference": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 35
+                                        },
+                                        "total_interest_saved": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1200
+                                        },
+                                        "months_saved": {
+                                            "type": "integer",
+                                            "example": 6
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "is_beneficial": {
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "recommendation": {
+                        "description": "Recommendation based on analysis",
+                        "type": "string",
+                        "example": "Consider the 36-month consolidation loan at 12% APR for maximum savings"
+                    }
+                },
+                "type": "object"
+            },
+            "DebtTypes": {
+                "title": "Debt Types Configuration",
+                "description": "Available debt types and their configurations",
+                "type": "object",
+                "additionalProperties": {
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "example": "Credit Card"
+                        },
+                        "description": {
+                            "type": "string",
+                            "example": "Credit card debt"
+                        },
+                        "icon": {
+                            "type": "string",
+                            "example": "credit_card"
+                        },
+                        "color": {
+                            "type": "string",
+                            "example": "#F44336"
+                        },
+                        "typical_interest_rate": {
+                            "type": "string",
+                            "example": "15-25%"
+                        },
+                        "payment_frequency": {
+                            "type": "string",
+                            "example": "monthly"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "FinancialGoalResource": {
+                "title": "Financial Goal Resource",
+                "description": "Financial goal resource representation",
+                "properties": {
+                    "id": {
+                        "description": "Goal ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "description": "User ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Goal name",
+                        "type": "string",
+                        "example": "Emergency Fund"
+                    },
+                    "description": {
+                        "description": "Goal description",
+                        "type": "string",
+                        "example": "Save 6 months of living expenses for emergencies",
+                        "nullable": true
+                    },
+                    "target_amount": {
+                        "description": "Target amount to save",
+                        "type": "number",
+                        "format": "float",
+                        "example": 10000
+                    },
+                    "current_amount": {
+                        "description": "Current saved amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 3500
+                    },
+                    "remaining_amount": {
+                        "description": "Amount remaining to reach goal",
+                        "type": "number",
+                        "format": "float",
+                        "example": 6500
+                    },
+                    "progress_percentage": {
+                        "description": "Percentage of goal completed",
+                        "type": "number",
+                        "format": "float",
+                        "example": 35
+                    },
+                    "target_date": {
+                        "description": "Target completion date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-12-31"
+                    },
+                    "days_remaining": {
+                        "description": "Days until target date",
+                        "type": "integer",
+                        "example": 320
+                    },
+                    "months_remaining": {
+                        "description": "Months until target date",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "priority": {
+                        "description": "Goal priority level",
+                        "type": "string",
+                        "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                        ],
+                        "example": "high"
+                    },
+                    "priority_label": {
+                        "description": "Human-readable priority",
+                        "type": "string",
+                        "example": "High Priority"
+                    },
+                    "status": {
+                        "description": "Goal status",
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "completed",
+                            "paused",
+                            "cancelled"
+                        ],
+                        "example": "active"
+                    },
+                    "status_label": {
+                        "description": "Human-readable status",
+                        "type": "string",
+                        "example": "Active"
+                    },
+                    "color": {
+                        "description": "Goal color for UI display",
+                        "type": "string",
+                        "example": "#2196F3"
+                    },
+                    "icon": {
+                        "description": "Goal icon identifier",
+                        "type": "string",
+                        "example": "flag"
+                    },
+                    "monthly_target": {
+                        "description": "Suggested monthly contribution",
+                        "type": "number",
+                        "format": "float",
+                        "example": 650,
+                        "nullable": true
+                    },
+                    "required_monthly_contribution": {
+                        "description": "Required monthly contribution to meet target",
+                        "type": "number",
+                        "format": "float",
+                        "example": 650
+                    },
+                    "milestone_settings": {
+                        "description": "Milestone configuration",
+                        "properties": {
+                            "milestones": {
+                                "description": "Percentage milestones",
+                                "type": "array",
+                                "items": {
+                                    "type": "integer",
+                                    "example": 25
+                                }
+                            },
+                            "notifications_enabled": {
+                                "description": "Whether milestone notifications are enabled",
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "current_milestone": {
+                        "description": "Current achieved milestone percentage",
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "next_milestone": {
+                        "description": "Next milestone percentage",
+                        "type": "integer",
+                        "example": 50,
+                        "nullable": true
+                    },
+                    "is_on_track": {
+                        "description": "Whether goal is on track to meet target date",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "projected_completion_date": {
+                        "description": "Projected completion based on current progress",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-11-15",
+                        "nullable": true
+                    },
+                    "contributions": {
+                        "description": "Goal contributions",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GoalContributionResource"
+                        }
+                    },
+                    "latest_contribution": {
+                        "$ref": "#/components/schemas/GoalContributionResource"
+                    },
+                    "contributions_summary": {
+                        "properties": {
+                            "total_contributions": {
+                                "type": "integer",
+                                "example": 15
+                            },
+                            "total_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 3500
+                            },
+                            "average_contribution": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 233.33
+                            },
+                            "largest_contribution": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 500
+                            },
+                            "this_month_total": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 650
+                            },
+                            "last_month_total": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 600
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "completed_at": {
+                        "description": "Completion timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-15T14:30:00.000000Z",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T12:30:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "GoalContributionResource": {
+                "title": "Goal Contribution Resource",
+                "description": "Goal contribution record",
+                "properties": {
+                    "id": {
+                        "description": "Contribution ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "financial_goal_id": {
+                        "description": "Associated goal ID",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "transaction_id": {
+                        "description": "Associated transaction ID",
+                        "type": "integer",
+                        "example": 123,
+                        "nullable": true
+                    },
+                    "amount": {
+                        "description": "Contribution amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 500
+                    },
+                    "date": {
+                        "description": "Contribution date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15"
+                    },
+                    "notes": {
+                        "description": "Contribution notes",
+                        "type": "string",
+                        "example": "Bonus contribution from tax refund",
+                        "nullable": true
+                    },
+                    "transaction": {
+                        "$ref": "#/components/schemas/TransactionResource"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T10:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T10:00:00.000000Z"
                     }
                 },
                 "type": "object"
@@ -8950,6 +12538,18 @@
         {
             "name": "Budgets",
             "description": "Budget management endpoints"
+        },
+        {
+            "name": "Debts",
+            "description": "Debt management endpoints"
+        },
+        {
+            "name": "Bills",
+            "description": "Bills and subscriptions endpoints"
+        },
+        {
+            "name": "Financial Goals",
+            "description": "Financial Goals"
         },
         {
             "name": "System",

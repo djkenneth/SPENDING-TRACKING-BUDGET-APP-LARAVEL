@@ -35,7 +35,7 @@ class DebtResource extends JsonResource
             'notes' => $this->notes,
             'payments' => DebtPaymentResource::collection($this->whenLoaded('payments')),
             'latest_payment' => $this->when($this->relationLoaded('payments'), function () {
-                return $this->payments->sortByDesc('payment_date')->first();
+                return new DebtPaymentResource($this->payments->sortByDesc('payment_date')->first());
             }),
             'total_payments' => $this->when($this->relationLoaded('payments'), function () {
                 return [
@@ -64,7 +64,7 @@ class DebtResource extends JsonResource
             'student_loan' => 'Student Loan',
         ];
 
-        return $labels[$this->type] ?? $this->type;
+        return $labels[$this->type] ?? ucfirst(str_replace('_', ' ', $this->type));
     }
 
     /**
@@ -127,33 +127,28 @@ class DebtResource extends JsonResource
     /**
      * Get estimated payoff information
      */
-    private function getEstimatedPayoff(): array
+    private function getEstimatedPayoff(): ?array
     {
-        if ($this->current_balance == 0 || $this->status !== 'active') {
-            return [
-                'months' => 0,
-                'date' => null,
-                'total_interest' => 0,
-            ];
+        if ($this->current_balance <= 0 || $this->minimum_payment <= 0) {
+            return null;
         }
 
-        // Simple calculation for estimated payoff
+        // Simple payoff calculation (can be enhanced with more complex formulas)
         $monthlyRate = ($this->interest_rate / 100) / 12;
-        $monthlyPayment = $this->minimum_payment;
 
-        if ($monthlyRate > 0 && $monthlyPayment > ($this->current_balance * $monthlyRate)) {
-            $months = ceil(
-                log($monthlyPayment / ($monthlyPayment - $this->current_balance * $monthlyRate)) /
-                log(1 + $monthlyRate)
-            );
+        if ($monthlyRate > 0) {
+            $monthsRemaining = -log(1 - ($this->current_balance * $monthlyRate) / $this->minimum_payment) / log(1 + $monthlyRate);
+            $monthsRemaining = ceil($monthsRemaining);
         } else {
-            $months = ceil($this->current_balance / $monthlyPayment);
+            $monthsRemaining = ceil($this->current_balance / $this->minimum_payment);
         }
+
+        $totalInterest = ($this->minimum_payment * $monthsRemaining) - $this->current_balance;
 
         return [
-            'months' => $months,
-            'date' => now()->addMonths($months)->format('Y-m-d'),
-            'total_interest' => round(($months * $monthlyPayment) - $this->current_balance, 2),
+            'months_remaining' => (int) $monthsRemaining,
+            'payoff_date' => now()->addMonths($monthsRemaining)->format('Y-m-d'),
+            'total_interest' => round($totalInterest, 2),
         ];
     }
 }
