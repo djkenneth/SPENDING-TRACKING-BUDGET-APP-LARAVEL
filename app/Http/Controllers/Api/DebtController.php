@@ -27,6 +27,40 @@ class DebtController extends Controller
 
     /**
      * Get all user debts with filtering and pagination
+     *
+     * @OA\Get(
+     *     path="/api/debts",
+     *     summary="Get list of debts",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filter by debt type",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by status",
+     *         @OA\Schema(type="string", enum={"active", "paid_off", "closed"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Sort field",
+     *         @OA\Schema(type="string", enum={"name", "current_balance", "interest_rate", "minimum_payment", "due_date"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Debts retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/DebtResource")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -84,6 +118,38 @@ class DebtController extends Controller
 
     /**
      * Create a new debt
+     *
+     * @OA\Post(
+     *     path="/api/debts",
+     *     summary="Create a new debt",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "type", "original_balance", "current_balance", "interest_rate", "minimum_payment", "due_date", "payment_frequency"},
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="type", type="string", enum={"credit_card", "personal_loan", "mortgage", "auto_loan", "student_loan"}),
+     *             @OA\Property(property="original_balance", type="number", format="float"),
+     *             @OA\Property(property="current_balance", type="number", format="float"),
+     *             @OA\Property(property="interest_rate", type="number", format="float"),
+     *             @OA\Property(property="minimum_payment", type="number", format="float"),
+     *             @OA\Property(property="due_date", type="string", format="date"),
+     *             @OA\Property(property="payment_frequency", type="string", enum={"monthly", "weekly", "bi-weekly"}),
+     *             @OA\Property(property="status", type="string", enum={"active", "paid_off", "closed"}, default="active"),
+     *             @OA\Property(property="notes", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Debt created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/DebtResource")
+     *         )
+     *     )
+     * )
      */
     public function store(CreateDebtRequest $request): JsonResponse
     {
@@ -114,6 +180,29 @@ class DebtController extends Controller
 
     /**
      * Get a specific debt
+     *
+     * @OA\Get(
+     *     path="/api/debts/{id}",
+     *     summary="Get a specific debt",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Debt ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Debt retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/DebtResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Debt not found")
+     * )
      */
     public function show(Request $request, Debt $debt): JsonResponse
     {
@@ -143,6 +232,27 @@ class DebtController extends Controller
 
     /**
      * Update a debt
+     *
+     * @OA\Put(
+     *     path="/api/debts/{id}",
+     *     summary="Update a debt",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Debt ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(ref="#/components/schemas/UpdateDebtRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Debt updated successfully"
+     *     )
+     * )
      */
     public function update(UpdateDebtRequest $request, Debt $debt): JsonResponse
     {
@@ -178,6 +288,24 @@ class DebtController extends Controller
 
     /**
      * Delete a debt
+     *
+     * @OA\Delete(
+     *     path="/api/debts/{id}",
+     *     summary="Delete a debt",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Debt ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Debt deleted successfully"
+     *     )
+     * )
      */
     public function destroy(Request $request, Debt $debt): JsonResponse
     {
@@ -212,6 +340,33 @@ class DebtController extends Controller
 
     /**
      * Record a debt payment
+     *
+     * @OA\Post(
+     *     path="/api/debts/{id}/payment",
+     *     summary="Record a debt payment",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Debt ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"amount", "payment_date"},
+     *             @OA\Property(property="amount", type="number", format="float"),
+     *             @OA\Property(property="payment_date", type="string", format="date"),
+     *             @OA\Property(property="notes", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Payment recorded successfully"
+     *     )
+     * )
      */
     public function recordPayment(RecordPaymentRequest $request, Debt $debt): JsonResponse
     {
@@ -250,6 +405,30 @@ class DebtController extends Controller
 
     /**
      * Get debt payoff schedule
+     *
+     * @OA\Get(
+     *     path="/api/debts/{id}/payoff-schedule",
+     *     summary="Get payoff schedule for a debt",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Debt ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="extra_payment",
+     *         in="query",
+     *         description="Extra payment amount",
+     *         @OA\Schema(type="number", format="float")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Payoff schedule retrieved successfully"
+     *     )
+     * )
      */
     public function getPayoffSchedule(Request $request, Debt $debt): JsonResponse
     {
@@ -288,6 +467,28 @@ class DebtController extends Controller
 
     /**
      * Get debt summary statistics
+     *
+     * @OA\Get(
+     *     path="/api/debts/summary",
+     *     summary="Get debts summary statistics",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Debts summary retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="total_debt", type="number"),
+     *                 @OA\Property(property="monthly_payments", type="number"),
+     *                 @OA\Property(property="average_interest_rate", type="number"),
+     *                 @OA\Property(property="debts_by_type", type="object"),
+     *                 @OA\Property(property="active_debts_count", type="integer"),
+     *                 @OA\Property(property="paid_off_count", type="integer")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getSummary(Request $request): JsonResponse
     {
@@ -346,6 +547,24 @@ class DebtController extends Controller
 
     /**
      * Get payment history for a debt
+     *
+     * @OA\Get(
+     *     path="/api/debts/{id}/payment-history",
+     *     summary="Get payment history for a debt",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Debt ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Payment history retrieved successfully"
+     *     )
+     * )
      */
     public function getPaymentHistory(Request $request, Debt $debt): JsonResponse
     {
@@ -413,6 +632,24 @@ class DebtController extends Controller
 
     /**
      * Mark debt as paid off
+     *
+     * @OA\Post(
+     *     path="/api/debts/{id}/mark-paid-off",
+     *     summary="Mark a debt as paid off",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Debt ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Debt marked as paid off successfully"
+     *     )
+     * )
      */
     public function markAsPaidOff(Request $request, Debt $debt): JsonResponse
     {
@@ -451,6 +688,23 @@ class DebtController extends Controller
 
     /**
      * Get debt types with their configurations
+     *
+     * @OA\Get(
+     *     path="/api/debts/types",
+     *     summary="Get available debt types",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Debt types retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(type="string", enum={"credit_card", "personal_loan", "mortgage", "auto_loan", "student_loan", "other"})
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getDebtTypes(): JsonResponse
     {
@@ -505,6 +759,23 @@ class DebtController extends Controller
 
     /**
      * Calculate debt consolidation options
+     *
+     * @OA\Post(
+     *     path="/api/debts/consolidation-options",
+     *     summary="Get debt consolidation options",
+     *     tags={"Debts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="debt_ids", type="array", @OA\Items(type="integer")),
+     *             @OA\Property(property="consolidation_rate", type="number", format="float")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Consolidation options calculated successfully"
+     *     )
+     * )
      */
     public function getConsolidationOptions(Request $request): JsonResponse
     {

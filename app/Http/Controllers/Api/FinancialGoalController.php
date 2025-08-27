@@ -27,7 +27,55 @@ class FinancialGoalController extends Controller
 
     /**
      * Get all financial goals
-     * GET /api/goals
+     *
+     * @OA\Get(
+     *     path="/api/goals",
+     *     summary="Get list of financial goals",
+     *     tags={"Financial Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by status (active, completed, paused, cancelled)",
+     *         @OA\Schema(type="string", enum={"active", "completed", "paused", "cancelled"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="priority",
+     *         in="query",
+     *         description="Filter by priority (high, medium, low)",
+     *         @OA\Schema(type="string", enum={"high", "medium", "low"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Sort field",
+     *         @OA\Schema(type="string", enum={"name", "target_amount", "current_amount", "target_date", "priority", "created_at", "progress_percentage"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_order",
+     *         in="query",
+     *         description="Sort order",
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, default="asc")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of financial goals retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/FinancialGoalResource")),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="active_goals", type="integer"),
+     *                 @OA\Property(property="completed_goals", type="integer"),
+     *                 @OA\Property(property="total_target_amount", type="number"),
+     *                 @OA\Property(property="total_current_amount", type="number"),
+     *                 @OA\Property(property="overall_progress", type="number"),
+     *                 @OA\Property(property="currency", type="string"),
+     *                 @OA\Property(property="currency_symbol", type="string")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -59,7 +107,7 @@ class FinancialGoalController extends Controller
 
         if ($sortBy === 'progress') {
             $query->selectRaw('*, (current_amount / target_amount * 100) as progress_percentage')
-                  ->orderBy('progress_percentage', $sortOrder);
+                ->orderBy('progress_percentage', $sortOrder);
         } else {
             $query->orderBy($sortBy, $sortOrder);
         }
@@ -92,7 +140,41 @@ class FinancialGoalController extends Controller
 
     /**
      * Create new financial goal
-     * POST /api/goals
+     *
+     * @OA\Post(
+     *     path="/api/goals",
+     *     summary="Create a new financial goal",
+     *     tags={"Financial Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "target_amount", "target_date", "priority"},
+     *             @OA\Property(property="name", type="string", maxLength=255),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="target_amount", type="number", format="float", minimum=0),
+     *             @OA\Property(property="current_amount", type="number", format="float", minimum=0, default=0),
+     *             @OA\Property(property="target_date", type="string", format="date"),
+     *             @OA\Property(property="priority", type="string", enum={"high", "medium", "low"}),
+     *             @OA\Property(property="status", type="string", enum={"active", "completed", "paused", "cancelled"}, default="active"),
+     *             @OA\Property(property="color", type="string", default="#2196F3"),
+     *             @OA\Property(property="icon", type="string", default="flag"),
+     *             @OA\Property(property="monthly_target", type="number", format="float"),
+     *             @OA\Property(property="milestone_settings", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Financial goal created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/FinancialGoalResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=500, description="Server error")
+     * )
      */
     public function store(CreateFinancialGoalRequest $request): JsonResponse
     {
@@ -138,7 +220,30 @@ class FinancialGoalController extends Controller
 
     /**
      * Get specific financial goal
-     * GET /api/goals/{id}
+     *
+     * @OA\Get(
+     *     path="/api/goals/{id}",
+     *     summary="Get a specific financial goal",
+     *     tags={"Financial Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Financial goal ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Financial goal retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/FinancialGoalResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized access"),
+     *     @OA\Response(response=404, description="Goal not found")
+     * )
      */
     public function show(Request $request, FinancialGoal $goal): JsonResponse
     {
@@ -191,7 +296,47 @@ class FinancialGoalController extends Controller
 
     /**
      * Update financial goal
-     * PUT /api/goals/{id}
+     *
+     * @OA\Put(
+     *     path="/api/goals/{id}",
+     *     summary="Update a financial goal",
+     *     tags={"Financial Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Financial goal ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", maxLength=255),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="target_amount", type="number", format="float", minimum=0),
+     *             @OA\Property(property="current_amount", type="number", format="float", minimum=0),
+     *             @OA\Property(property="target_date", type="string", format="date"),
+     *             @OA\Property(property="priority", type="string", enum={"high", "medium", "low"}),
+     *             @OA\Property(property="status", type="string", enum={"active", "completed", "paused", "cancelled"}),
+     *             @OA\Property(property="color", type="string"),
+     *             @OA\Property(property="icon", type="string"),
+     *             @OA\Property(property="monthly_target", type="number", format="float"),
+     *             @OA\Property(property="milestone_settings", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Financial goal updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/FinancialGoalResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized access"),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=500, description="Server error")
+     * )
      */
     public function update(UpdateFinancialGoalRequest $request, FinancialGoal $goal): JsonResponse
     {
@@ -248,7 +393,33 @@ class FinancialGoalController extends Controller
 
     /**
      * Delete financial goal
-     * DELETE /api/goals/{id}
+     *
+     * @OA\Delete(
+     *     path="/api/goals/{id}",
+     *     summary="Delete a financial goal",
+     *     tags={"Financial Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Financial goal ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Financial goal deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="deleted_goal_id", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized access"),
+     *     @OA\Response(response=500, description="Server error")
+     * )
      */
     public function destroy(Request $request, FinancialGoal $goal): JsonResponse
     {
@@ -291,7 +462,39 @@ class FinancialGoalController extends Controller
 
     /**
      * Add money to goal (contribute)
-     * POST /api/goals/{id}/contribute
+     *
+     * @OA\Post(
+     *     path="/api/goals/{id}/contribute",
+     *     summary="Add contribution to a financial goal",
+     *     tags={"Financial Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Financial goal ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"amount"},
+     *             @OA\Property(property="amount", type="number", format="float", minimum=0.01),
+     *             @OA\Property(property="date", type="string", format="date"),
+     *             @OA\Property(property="notes", type="string"),
+     *             @OA\Property(property="transaction_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Contribution added successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/FinancialGoalResource")
+     *         )
+     *     )
+     * )
      */
     public function contribute(ContributeToGoalRequest $request, FinancialGoal $goal): JsonResponse
     {
@@ -367,7 +570,33 @@ class FinancialGoalController extends Controller
 
     /**
      * Get goal progress details
-     * GET /api/goals/{id}/progress
+     *
+     * @OA\Get(
+     *     path="/api/goals/{id}/progress",
+     *     summary="Get detailed progress of a financial goal",
+     *     tags={"Financial Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Financial goal ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Goal progress retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="goal", ref="#/components/schemas/FinancialGoalResource"),
+     *                 @OA\Property(property="progress", type="object"),
+     *                 @OA\Property(property="projections", type="object"),
+     *                 @OA\Property(property="milestones", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function progress(Request $request, FinancialGoal $goal): JsonResponse
     {
@@ -409,7 +638,31 @@ class FinancialGoalController extends Controller
 
     /**
      * Mark goal as completed
-     * POST /api/goals/{id}/complete
+     *
+     * @OA\Post(
+     *     path="/api/goals/{id}/complete",
+     *     summary="Mark a financial goal as completed",
+     *     tags={"Financial Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Financial goal ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Goal marked as completed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/FinancialGoalResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Goal already completed"),
+     *     @OA\Response(response=403, description="Unauthorized access")
+     * )
      */
     public function complete(Request $request, FinancialGoal $goal): JsonResponse
     {
