@@ -2194,6 +2194,1599 @@
                 ]
             }
         },
+        "/api/budgets": {
+            "get": {
+                "tags": [
+                    "Budgets"
+                ],
+                "summary": "Get all user budgets with filtering",
+                "description": "Get all user budgets with filtering",
+                "operationId": "getBudgets",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "weekly",
+                                "monthly",
+                                "yearly"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "include_inactive",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "amount",
+                                "spent",
+                                "start_date",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Budget"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "active_count": {
+                                                    "type": "integer"
+                                                },
+                                                "inactive_count": {
+                                                    "type": "integer"
+                                                },
+                                                "total_budgeted": {
+                                                    "type": "number"
+                                                },
+                                                "total_spent": {
+                                                    "type": "number"
+                                                },
+                                                "by_period": {
+                                                    "type": "object"
+                                                },
+                                                "statistics": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Budgets"
+                ],
+                "summary": "Create a new budget",
+                "description": "Create a new budget",
+                "operationId": "createBudget",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateBudgetRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Budget created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Budget"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/budgets/{id}": {
+            "get": {
+                "tags": [
+                    "Budgets"
+                ],
+                "summary": "Get specific budget with analysis",
+                "description": "Get specific budget with analysis",
+                "operationId": "getBudget",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Budget"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "analysis": {
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Budget not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Budgets"
+                ],
+                "summary": "Update budget",
+                "description": "Update budget",
+                "operationId": "updateBudget",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateBudgetRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Budget updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Budget"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Budget not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Budgets"
+                ],
+                "summary": "Delete budget",
+                "description": "Delete budget",
+                "operationId": "deleteBudget",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Budget deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Budget not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/budgets/current/month": {
+            "get": {
+                "tags": [
+                    "Budgets"
+                ],
+                "summary": "Get current month budgets with spending",
+                "description": "Get current month budgets",
+                "operationId": "getCurrentMonthBudgets",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current month budgets",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Budget"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total_budgeted": {
+                                                    "type": "number"
+                                                },
+                                                "total_spent": {
+                                                    "type": "number"
+                                                },
+                                                "remaining": {
+                                                    "type": "number"
+                                                },
+                                                "percentage_used": {
+                                                    "type": "number"
+                                                },
+                                                "budgets_count": {
+                                                    "type": "integer"
+                                                },
+                                                "over_budget_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/budgets/{id}/analysis": {
+            "get": {
+                "tags": [
+                    "Budgets"
+                ],
+                "summary": "Get budget analysis",
+                "description": "Get budget analysis",
+                "operationId": "getBudgetAnalysis",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "current",
+                                "previous",
+                                "comparison"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Budget analysis data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Budget not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/budgets/{id}/reset": {
+            "post": {
+                "tags": [
+                    "Budgets"
+                ],
+                "summary": "Reset budget for new period",
+                "description": "Reset budget for new period",
+                "operationId": "resetBudget",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "carry_over_unused": {
+                                        "type": "boolean"
+                                    },
+                                    "reset_spent": {
+                                        "type": "boolean",
+                                        "default": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Budget reset successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Budget"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Budget not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get all user categories",
+                "description": "Get all user categories",
+                "operationId": "getCategories",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "income",
+                                "expense",
+                                "transfer"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "include_inactive",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "sort_order",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CategoryResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "by_type": {
+                                                    "type": "object"
+                                                },
+                                                "active_count": {
+                                                    "type": "integer"
+                                                },
+                                                "inactive_count": {
+                                                    "type": "integer"
+                                                },
+                                                "statistics": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Create a new category",
+                "description": "Create a new category",
+                "operationId": "createCategory",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCategoryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CategoryResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get specific category",
+                "description": "Get specific category",
+                "operationId": "getCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CategoryResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Update category",
+                "description": "Update category",
+                "operationId": "updateCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCategoryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CategoryResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Delete category",
+                "description": "Delete category",
+                "operationId": "deleteCategory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot delete category"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/{id}/transactions": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get category transactions",
+                "description": "Get category transactions",
+                "operationId": "getCategoryTransactions",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "income",
+                                "expense",
+                                "transfer"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category transactions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TransactionResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/analytics/spending-analysis": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get spending analysis by category",
+                "description": "Get spending analysis by category",
+                "operationId": "getCategorySpendingAnalysis",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "income",
+                                "expense"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Spending analysis data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/analytics/trends": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get category trends",
+                "description": "Get category trends",
+                "operationId": "getCategoryTrends",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "months",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 24,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "category_ids[]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category trends data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/bulk/update": {
+            "put": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Bulk update categories",
+                "description": "Bulk update categories",
+                "operationId": "bulkUpdateCategories",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "categories": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "color": {
+                                                    "type": "string"
+                                                },
+                                                "icon": {
+                                                    "type": "string"
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean"
+                                                },
+                                                "sort_order": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Categories updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CategoryResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/bulk/reorder": {
+            "put": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Reorder categories",
+                "description": "Reorder categories",
+                "operationId": "reorderCategories",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "categories": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "sort_order": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Categories reordered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/meta/icons-and-colors": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get available icons and colors",
+                "description": "Get category icons and colors",
+                "operationId": "getCategoryIconsAndColors",
+                "responses": {
+                    "200": {
+                        "description": "Available icons and colors",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "icons": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "colors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/merge": {
+            "post": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Merge categories",
+                "description": "Merge categories",
+                "operationId": "mergeCategories",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "source_category_id": {
+                                        "type": "integer"
+                                    },
+                                    "target_category_id": {
+                                        "type": "integer"
+                                    },
+                                    "delete_source": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Categories merged successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/meta/defaults": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get default categories for new users",
+                "description": "Get default categories for new users",
+                "operationId": "getDefaultCategories",
+                "responses": {
+                    "200": {
+                        "description": "Default categories list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/meta/create-defaults": {
+            "post": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Create default categories for user",
+                "description": "Create default categories for user",
+                "operationId": "createDefaultCategories",
+                "responses": {
+                    "201": {
+                        "description": "Default categories created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CategoryResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "User already has categories"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/health": {
             "get": {
                 "tags": [
@@ -2228,6 +3821,929 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/transactions": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Get all user transactions with filtering and pagination",
+                "description": "Get all user transactions with filtering and pagination",
+                "operationId": "getTransactions",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "income",
+                                "expense",
+                                "transfer"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "min_amount",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "max_amount",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "tags[]",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "name": "is_cleared",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "is_recurring",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "date",
+                                "amount",
+                                "description",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TransactionResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "from": {
+                                                    "type": "integer"
+                                                },
+                                                "to": {
+                                                    "type": "integer"
+                                                },
+                                                "summary": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Create a new transaction",
+                "description": "Create a new transaction",
+                "operationId": "createTransaction",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateTransactionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Transaction created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TransactionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/transactions/{id}": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Get specific transaction details",
+                "description": "Get specific transaction",
+                "operationId": "getTransaction",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TransactionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Update transaction",
+                "description": "Update transaction",
+                "operationId": "updateTransaction",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateTransactionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transaction updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TransactionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Delete transaction",
+                "description": "Delete transaction",
+                "operationId": "deleteTransaction",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/transactions/bulk": {
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Bulk create transactions",
+                "description": "Bulk create transactions",
+                "operationId": "bulkCreateTransactions",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "transactions": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/CreateTransactionRequest"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Transactions created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "created_count": {
+                                                    "type": "integer"
+                                                },
+                                                "transactions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/TransactionResource"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Bulk delete transactions",
+                "description": "Bulk delete transactions",
+                "operationId": "bulkDeleteTransactions",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "transaction_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Transactions deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "deleted_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/transactions/search/query": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Search transactions",
+                "description": "Search transactions",
+                "operationId": "searchTransactions",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TransactionResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/transactions/import/csv": {
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Import transactions from CSV file",
+                "description": "Import transactions from CSV",
+                "operationId": "importTransactions",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "skip_duplicates": {
+                                        "type": "boolean"
+                                    },
+                                    "date_format": {
+                                        "type": "string",
+                                        "default": "Y-m-d"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Import results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "imported": {
+                                                    "type": "integer"
+                                                },
+                                                "skipped": {
+                                                    "type": "integer"
+                                                },
+                                                "errors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/transactions/export/data": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Export transactions to CSV",
+                "description": "Export transactions to CSV",
+                "operationId": "exportTransactions",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "csv",
+                            "enum": [
+                                "csv",
+                                "xlsx"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Export file",
+                        "content": {
+                            "text/csv": {},
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/transactions/statistics/summary": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Get transaction statistics",
+                "description": "Get transaction statistics",
+                "operationId": "getTransactionStatistics",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_income": {
+                                                    "type": "number"
+                                                },
+                                                "total_expenses": {
+                                                    "type": "number"
+                                                },
+                                                "net_income": {
+                                                    "type": "number"
+                                                },
+                                                "transaction_count": {
+                                                    "type": "integer"
+                                                },
+                                                "average_transaction": {
+                                                    "type": "number"
+                                                },
+                                                "largest_expense": {
+                                                    "type": "number"
+                                                },
+                                                "largest_income": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/transactions/recent/list": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Get recent transactions",
+                "description": "Get recent transactions",
+                "operationId": "getRecentTransactions",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 50,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recent transactions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TransactionResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/user/profile": {
@@ -3888,6 +6404,375 @@
                 },
                 "type": "object"
             },
+            "CreateBudgetRequest": {
+                "title": "Create Budget Request",
+                "description": "Request body for creating a new budget",
+                "required": [
+                    "category_id",
+                    "name",
+                    "amount",
+                    "period",
+                    "start_date",
+                    "end_date"
+                ],
+                "properties": {
+                    "category_id": {
+                        "description": "ID of the category this budget belongs to",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "name": {
+                        "description": "Name of the budget",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Monthly Groceries Budget"
+                    },
+                    "amount": {
+                        "description": "Budget amount",
+                        "type": "number",
+                        "format": "float",
+                        "maximum": 999999999.99,
+                        "minimum": 0.01,
+                        "example": 500
+                    },
+                    "period": {
+                        "description": "Budget period type",
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "monthly",
+                            "yearly"
+                        ],
+                        "example": "monthly"
+                    },
+                    "start_date": {
+                        "description": "Budget start date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-01"
+                    },
+                    "end_date": {
+                        "description": "Budget end date (must be after start_date)",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-31"
+                    },
+                    "is_active": {
+                        "description": "Whether the budget is active",
+                        "type": "boolean",
+                        "default": true,
+                        "example": true
+                    },
+                    "alert_threshold": {
+                        "description": "Percentage threshold for budget alerts",
+                        "type": "number",
+                        "format": "float",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 80
+                    },
+                    "alert_enabled": {
+                        "description": "Whether alerts are enabled for this budget",
+                        "type": "boolean",
+                        "default": true,
+                        "example": true
+                    },
+                    "rollover_settings": {
+                        "description": "Settings for budget rollover",
+                        "properties": {
+                            "enabled": {
+                                "description": "Whether rollover is enabled",
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "carry_over_unused": {
+                                "description": "Whether to carry over unused budget amount",
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "reset_on_overspend": {
+                                "description": "Whether to reset on overspend",
+                                "type": "boolean",
+                                "example": false
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateBudgetRequest": {
+                "title": "Update Budget Request",
+                "description": "Request body for updating an existing budget. All fields are optional.",
+                "properties": {
+                    "category_id": {
+                        "description": "ID of the category this budget belongs to",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "name": {
+                        "description": "Name of the budget",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Updated Monthly Groceries Budget"
+                    },
+                    "amount": {
+                        "description": "Budget amount",
+                        "type": "number",
+                        "format": "float",
+                        "maximum": 999999999.99,
+                        "minimum": 0.01,
+                        "example": 600
+                    },
+                    "period": {
+                        "description": "Budget period type",
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "monthly",
+                            "yearly"
+                        ],
+                        "example": "monthly"
+                    },
+                    "start_date": {
+                        "description": "Budget start date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-02-01"
+                    },
+                    "end_date": {
+                        "description": "Budget end date (must be after start_date)",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-02-29"
+                    },
+                    "is_active": {
+                        "description": "Whether the budget is active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "alert_threshold": {
+                        "description": "Percentage threshold for budget alerts",
+                        "type": "number",
+                        "format": "float",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 75
+                    },
+                    "alert_enabled": {
+                        "description": "Whether alerts are enabled for this budget",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "rollover_settings": {
+                        "description": "Settings for budget rollover",
+                        "properties": {
+                            "enabled": {
+                                "description": "Whether rollover is enabled",
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "carry_over_unused": {
+                                "description": "Whether to carry over unused budget amount",
+                                "type": "boolean",
+                                "example": false
+                            },
+                            "reset_on_overspend": {
+                                "description": "Whether to reset on overspend",
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "BudgetResource": {
+                "title": "Budget Resource",
+                "description": "Budget resource response",
+                "properties": {
+                    "id": {
+                        "description": "Budget ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "description": "User ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "description": "Category ID",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "name": {
+                        "description": "Budget name",
+                        "type": "string",
+                        "example": "Monthly Groceries Budget"
+                    },
+                    "amount": {
+                        "description": "Budget amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 500
+                    },
+                    "spent": {
+                        "description": "Amount spent",
+                        "type": "number",
+                        "format": "float",
+                        "example": 325.5
+                    },
+                    "remaining": {
+                        "description": "Remaining budget amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 174.5
+                    },
+                    "percentage_used": {
+                        "description": "Percentage of budget used",
+                        "type": "number",
+                        "format": "float",
+                        "example": 65.1
+                    },
+                    "period": {
+                        "description": "Budget period",
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "monthly",
+                            "yearly"
+                        ],
+                        "example": "monthly"
+                    },
+                    "start_date": {
+                        "description": "Budget start date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-01"
+                    },
+                    "end_date": {
+                        "description": "Budget end date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-31"
+                    },
+                    "is_active": {
+                        "description": "Whether budget is active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "alert_threshold": {
+                        "description": "Alert threshold percentage",
+                        "type": "number",
+                        "format": "float",
+                        "example": 80
+                    },
+                    "alert_enabled": {
+                        "description": "Whether alerts are enabled",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "rollover_settings": {
+                        "description": "Rollover settings",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "carry_over_unused": {
+                                "type": "boolean"
+                            },
+                            "reset_on_overspend": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "category": {
+                        "$ref": "#/components/schemas/CategoryResource"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "BudgetValidationError": {
+                "title": "Budget Validation Error Response",
+                "properties": {
+                    "message": {
+                        "description": "Error message",
+                        "type": "string",
+                        "example": "The given data was invalid."
+                    },
+                    "errors": {
+                        "description": "Validation errors by field",
+                        "properties": {
+                            "category_id": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "The selected category is invalid or does not belong to you."
+                                }
+                            },
+                            "name": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Budget name cannot exceed 255 characters."
+                                }
+                            },
+                            "amount": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Budget amount must be at least 0.01."
+                                }
+                            },
+                            "period": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Budget period must be weekly, monthly, or yearly."
+                                }
+                            },
+                            "start_date": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "A budget for this category already exists for the specified period."
+                                }
+                            },
+                            "end_date": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "End date must be after the start date."
+                                }
+                            },
+                            "alert_threshold": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Alert threshold cannot exceed 100%."
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "Category": {
                 "title": "Category",
                 "description": "Transaction category model",
@@ -3962,6 +6847,752 @@
                 },
                 "type": "object"
             },
+            "CreateCategoryRequest": {
+                "title": "Create Category Request",
+                "description": "Request body for creating a new category",
+                "required": [
+                    "name",
+                    "type"
+                ],
+                "properties": {
+                    "name": {
+                        "description": "Category name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Groceries"
+                    },
+                    "type": {
+                        "description": "Category type",
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "color": {
+                        "description": "Hex color code for the category",
+                        "type": "string",
+                        "pattern": "^#[a-fA-F0-9]{6}$",
+                        "example": "#4CAF50"
+                    },
+                    "icon": {
+                        "description": "Icon name for the category",
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "shopping_cart"
+                    },
+                    "description": {
+                        "description": "Category description",
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Monthly grocery expenses"
+                    },
+                    "is_active": {
+                        "description": "Whether the category is active",
+                        "type": "boolean",
+                        "default": true,
+                        "example": true
+                    },
+                    "sort_order": {
+                        "description": "Sort order for display",
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateCategoryRequest": {
+                "title": "Update Category Request",
+                "description": "Request body for updating an existing category. All fields are optional.",
+                "properties": {
+                    "name": {
+                        "description": "Category name",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Updated Groceries"
+                    },
+                    "type": {
+                        "description": "Category type (cannot be changed if category has transactions)",
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "color": {
+                        "description": "Hex color code for the category",
+                        "type": "string",
+                        "pattern": "^#[a-fA-F0-9]{6}$",
+                        "example": "#2196F3"
+                    },
+                    "icon": {
+                        "description": "Icon name for the category",
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "local_grocery_store"
+                    },
+                    "description": {
+                        "description": "Category description",
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Updated monthly grocery expenses"
+                    },
+                    "is_active": {
+                        "description": "Whether the category is active (cannot deactivate if has recent transactions)",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "description": "Sort order for display",
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryResource": {
+                "title": "Category Resource",
+                "description": "Category resource response",
+                "properties": {
+                    "id": {
+                        "description": "Category ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Category name",
+                        "type": "string",
+                        "example": "Groceries"
+                    },
+                    "type": {
+                        "description": "Category type",
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "type_label": {
+                        "description": "Human-readable type label",
+                        "type": "string",
+                        "example": "Expense"
+                    },
+                    "color": {
+                        "description": "Hex color code",
+                        "type": "string",
+                        "example": "#4CAF50"
+                    },
+                    "icon": {
+                        "description": "Icon name",
+                        "type": "string",
+                        "example": "shopping_cart"
+                    },
+                    "description": {
+                        "description": "Category description",
+                        "type": "string",
+                        "example": "Monthly grocery expenses"
+                    },
+                    "is_active": {
+                        "description": "Whether category is active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "description": "Display sort order",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z"
+                    },
+                    "created_at_human": {
+                        "description": "Human-readable creation time",
+                        "type": "string",
+                        "example": "2 weeks ago"
+                    },
+                    "updated_at_human": {
+                        "description": "Human-readable update time",
+                        "type": "string",
+                        "example": "3 days ago"
+                    },
+                    "statistics": {
+                        "description": "Category statistics (only included on show endpoint)",
+                        "properties": {
+                            "transaction_count": {
+                                "type": "integer",
+                                "example": 42
+                            },
+                            "total_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 1250.5
+                            },
+                            "current_month_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 350.25
+                            },
+                            "last_transaction_date": {
+                                "type": "string",
+                                "format": "date",
+                                "example": "2024-01-14"
+                            },
+                            "average_transaction": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 29.77
+                            },
+                            "budget_count": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "active_budget_count": {
+                                "type": "integer",
+                                "example": 1
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "has_transactions": {
+                        "description": "Whether category has any transactions",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "has_budgets": {
+                        "description": "Whether category has any budgets",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "can_delete": {
+                        "description": "Whether category can be deleted",
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryTransactionResource": {
+                "title": "Category Transaction Resource",
+                "description": "Transaction resource for category transactions listing",
+                "properties": {
+                    "id": {
+                        "description": "Transaction ID",
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "description": {
+                        "description": "Transaction description",
+                        "type": "string",
+                        "example": "Weekly groceries"
+                    },
+                    "amount": {
+                        "description": "Transaction amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 85.5
+                    },
+                    "formatted_amount": {
+                        "description": "Formatted amount with currency and sign",
+                        "type": "string",
+                        "example": "-$85.50"
+                    },
+                    "type": {
+                        "description": "Transaction type",
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "date": {
+                        "description": "Transaction date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-14"
+                    },
+                    "formatted_date": {
+                        "description": "Human-readable date",
+                        "type": "string",
+                        "example": "Jan 14, 2024"
+                    },
+                    "notes": {
+                        "description": "Transaction notes",
+                        "type": "string",
+                        "example": "Bought vegetables and fruits"
+                    },
+                    "tags": {
+                        "description": "Transaction tags",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "food",
+                            "essential"
+                        ]
+                    },
+                    "reference_number": {
+                        "description": "Reference number",
+                        "type": "string",
+                        "example": "INV-2024-001"
+                    },
+                    "is_cleared": {
+                        "description": "Whether transaction is cleared",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_recurring": {
+                        "description": "Whether transaction is recurring",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "account": {
+                        "description": "Account information",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Checking Account"
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "checking"
+                            },
+                            "color": {
+                                "type": "string",
+                                "example": "#2196F3"
+                            },
+                            "icon": {
+                                "type": "string",
+                                "example": "account_balance"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "transfer_account": {
+                        "description": "Transfer destination account (only for transfers)",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            },
+                            "color": {
+                                "type": "string"
+                            },
+                            "icon": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-14T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-14T10:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "CategorySpendingAnalysis": {
+                "title": "Category Spending Analysis",
+                "description": "Spending analysis data for categories",
+                "properties": {
+                    "category": {
+                        "$ref": "#/components/schemas/CategoryResource"
+                    },
+                    "current_month": {
+                        "properties": {
+                            "spent": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 450.75
+                            },
+                            "budget": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 500
+                            },
+                            "percentage": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 90.15
+                            },
+                            "transaction_count": {
+                                "type": "integer",
+                                "example": 12
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "last_month": {
+                        "properties": {
+                            "spent": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 380.5
+                            },
+                            "budget": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 500
+                            },
+                            "percentage": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 76.1
+                            },
+                            "transaction_count": {
+                                "type": "integer",
+                                "example": 10
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "average_monthly": {
+                        "description": "Average monthly spending",
+                        "type": "number",
+                        "format": "float",
+                        "example": 425.25
+                    },
+                    "trend": {
+                        "description": "Spending trend",
+                        "type": "string",
+                        "enum": [
+                            "increasing",
+                            "decreasing",
+                            "stable"
+                        ],
+                        "example": "increasing"
+                    },
+                    "trend_percentage": {
+                        "description": "Trend percentage change",
+                        "type": "number",
+                        "format": "float",
+                        "example": 18.5
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryTrend": {
+                "title": "Category Trend",
+                "description": "Category trend data over time",
+                "properties": {
+                    "category_id": {
+                        "description": "Category ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_name": {
+                        "description": "Category name",
+                        "type": "string",
+                        "example": "Groceries"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2024-01-01"
+                                },
+                                "amount": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 125.5
+                                },
+                                "transaction_count": {
+                                    "type": "integer",
+                                    "example": 5
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryIconsColors": {
+                "title": "Category Icons and Colors",
+                "description": "Available icons and colors for categories",
+                "properties": {
+                    "icons": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "example": "shopping_cart"
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "example": "Shopping Cart"
+                                },
+                                "category": {
+                                    "type": "string",
+                                    "example": "commerce"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "colors": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "value": {
+                                    "type": "string",
+                                    "example": "#4CAF50"
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "example": "Green"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "BulkUpdateCategoriesRequest": {
+                "title": "Bulk Update Categories Request",
+                "description": "Request body for bulk updating categories",
+                "required": [
+                    "categories"
+                ],
+                "properties": {
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "id"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Updated Name"
+                                },
+                                "color": {
+                                    "type": "string",
+                                    "example": "#FF5722"
+                                },
+                                "icon": {
+                                    "type": "string",
+                                    "example": "new_icon"
+                                },
+                                "is_active": {
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "sort_order": {
+                                    "type": "integer",
+                                    "example": 3
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "minItems": 1
+                    }
+                },
+                "type": "object"
+            },
+            "ReorderCategoriesRequest": {
+                "title": "Reorder Categories Request",
+                "description": "Request body for reordering categories",
+                "required": [
+                    "categories"
+                ],
+                "properties": {
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "id",
+                                "sort_order"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "sort_order": {
+                                    "type": "integer",
+                                    "example": 0
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "minItems": 1
+                    }
+                },
+                "type": "object"
+            },
+            "MergeCategoriesRequest": {
+                "title": "Merge Categories Request",
+                "description": "Request body for merging two categories",
+                "required": [
+                    "source_category_id",
+                    "target_category_id"
+                ],
+                "properties": {
+                    "source_category_id": {
+                        "description": "ID of the source category to merge from",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "target_category_id": {
+                        "description": "ID of the target category to merge into",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "delete_source": {
+                        "description": "Whether to delete the source category after merge",
+                        "type": "boolean",
+                        "default": false,
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "MergeCategoriesResponse": {
+                "title": "Merge Categories Response",
+                "properties": {
+                    "moved_transactions": {
+                        "description": "Number of transactions moved",
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "moved_budgets": {
+                        "description": "Number of budgets moved",
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "source_category": {
+                        "description": "Source category name",
+                        "type": "string",
+                        "example": "Old Groceries"
+                    },
+                    "target_category": {
+                        "description": "Target category name",
+                        "type": "string",
+                        "example": "Groceries"
+                    },
+                    "source_deleted": {
+                        "description": "Whether source category was deleted",
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "DefaultCategory": {
+                "title": "Default Category",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Salary"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ]
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "#4CAF50"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "attach_money"
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryValidationError": {
+                "title": "Category Validation Error Response",
+                "properties": {
+                    "message": {
+                        "description": "Error message",
+                        "type": "string",
+                        "example": "The given data was invalid."
+                    },
+                    "errors": {
+                        "properties": {
+                            "name": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "A category with this name already exists for this type."
+                                }
+                            },
+                            "type": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Cannot change category type. This category has 42 transactions."
+                                }
+                            },
+                            "color": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "The color must be a valid hex color code (e.g., #FF0000)."
+                                }
+                            },
+                            "is_active": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Cannot deactivate category with 5 transactions in the last 30 days."
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "LoginRequest": {
                 "required": [
                     "email",
@@ -4028,176 +7659,6 @@
                         "description": "Preferred language",
                         "type": "string",
                         "example": "en"
-                    }
-                },
-                "type": "object"
-            },
-            "CreateTransactionRequest": {
-                "required": [
-                    "account_id",
-                    "category_id",
-                    "amount",
-                    "type",
-                    "date",
-                    "description"
-                ],
-                "properties": {
-                    "account_id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "category_id": {
-                        "type": "integer",
-                        "example": 5
-                    },
-                    "amount": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 1500.5
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "income",
-                            "expense",
-                            "transfer"
-                        ],
-                        "example": "expense"
-                    },
-                    "date": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "2025-01-15"
-                    },
-                    "description": {
-                        "type": "string",
-                        "example": "Grocery shopping"
-                    },
-                    "notes": {
-                        "type": "string",
-                        "example": "Weekly groceries",
-                        "nullable": true
-                    },
-                    "tags": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "example": [
-                            "groceries",
-                            "food"
-                        ]
-                    },
-                    "transfer_account_id": {
-                        "description": "Required for transfer type",
-                        "type": "integer",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "UpdateTransactionRequest": {
-                "properties": {
-                    "account_id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "category_id": {
-                        "type": "integer",
-                        "example": 5
-                    },
-                    "amount": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 1500.5
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "income",
-                            "expense",
-                            "transfer"
-                        ],
-                        "example": "expense"
-                    },
-                    "date": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "2025-01-15"
-                    },
-                    "description": {
-                        "type": "string",
-                        "example": "Grocery shopping"
-                    },
-                    "notes": {
-                        "type": "string",
-                        "example": "Weekly groceries",
-                        "nullable": true
-                    },
-                    "tags": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "example": [
-                            "groceries",
-                            "food"
-                        ]
-                    }
-                },
-                "type": "object"
-            },
-            "CreateBudgetRequest": {
-                "required": [
-                    "name",
-                    "amount",
-                    "period",
-                    "start_date"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Monthly Food Budget"
-                    },
-                    "category_id": {
-                        "type": "integer",
-                        "example": 5,
-                        "nullable": true
-                    },
-                    "amount": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 10000
-                    },
-                    "period": {
-                        "type": "string",
-                        "enum": [
-                            "daily",
-                            "weekly",
-                            "monthly",
-                            "yearly",
-                            "custom"
-                        ],
-                        "example": "monthly"
-                    },
-                    "start_date": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "2025-01-01"
-                    },
-                    "end_date": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "2025-01-31",
-                        "nullable": true
-                    },
-                    "rollover": {
-                        "type": "boolean",
-                        "example": false
-                    },
-                    "alert_threshold": {
-                        "type": "integer",
-                        "example": 80
                     }
                 },
                 "type": "object"
@@ -4469,6 +7930,891 @@
                 },
                 "type": "object"
             },
+            "CreateTransactionRequest": {
+                "title": "Create Transaction Request",
+                "description": "Request body for creating a new transaction",
+                "required": [
+                    "account_id",
+                    "category_id",
+                    "description",
+                    "amount",
+                    "type",
+                    "date"
+                ],
+                "properties": {
+                    "account_id": {
+                        "description": "ID of the account",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "description": "ID of the category",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "transfer_account_id": {
+                        "description": "ID of transfer destination account (required for transfers)",
+                        "type": "integer",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "description": {
+                        "description": "Transaction description",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Weekly groceries"
+                    },
+                    "amount": {
+                        "description": "Transaction amount",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0.01,
+                        "example": 125.5
+                    },
+                    "type": {
+                        "description": "Transaction type",
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "date": {
+                        "description": "Transaction date (cannot be future)",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15"
+                    },
+                    "notes": {
+                        "description": "Additional notes",
+                        "type": "string",
+                        "maxLength": 1000,
+                        "example": "Bought vegetables, fruits, and dairy products",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "description": "Transaction tags",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 50
+                        },
+                        "example": [
+                            "groceries",
+                            "food",
+                            "essential"
+                        ]
+                    },
+                    "reference_number": {
+                        "description": "Reference or invoice number",
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "INV-2024-001",
+                        "nullable": true
+                    },
+                    "location": {
+                        "description": "Transaction location",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Walmart Superstore, Main Street",
+                        "nullable": true
+                    },
+                    "attachments": {
+                        "description": "File attachments (jpg, jpeg, png, pdf, doc, docx - max 2MB each)",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "binary"
+                        }
+                    },
+                    "is_recurring": {
+                        "description": "Whether transaction is recurring",
+                        "type": "boolean",
+                        "default": false,
+                        "example": false
+                    },
+                    "recurring_type": {
+                        "description": "Recurring frequency (required if is_recurring is true)",
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "monthly",
+                            "quarterly",
+                            "yearly"
+                        ],
+                        "example": "monthly",
+                        "nullable": true
+                    },
+                    "recurring_interval": {
+                        "description": "Recurring interval (required if is_recurring is true)",
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "recurring_end_date": {
+                        "description": "When recurring transactions should end",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-12-31",
+                        "nullable": true
+                    },
+                    "is_cleared": {
+                        "description": "Whether transaction is cleared/reconciled",
+                        "type": "boolean",
+                        "default": true,
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateTransactionRequest": {
+                "title": "Update Transaction Request",
+                "description": "Request body for updating an existing transaction. All fields are optional.",
+                "properties": {
+                    "account_id": {
+                        "description": "ID of the account",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "description": "ID of the category",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "transfer_account_id": {
+                        "description": "ID of transfer destination account",
+                        "type": "integer",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "description": {
+                        "description": "Transaction description",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Updated grocery shopping"
+                    },
+                    "amount": {
+                        "description": "Transaction amount",
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0.01,
+                        "example": 150.75
+                    },
+                    "type": {
+                        "description": "Transaction type",
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "date": {
+                        "description": "Transaction date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "example": "Updated notes",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 50
+                        },
+                        "example": [
+                            "groceries",
+                            "updated"
+                        ]
+                    },
+                    "reference_number": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "INV-2024-002",
+                        "nullable": true
+                    },
+                    "location": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Updated location",
+                        "nullable": true
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "binary"
+                        }
+                    },
+                    "is_recurring": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "recurring_type": {
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "monthly",
+                            "quarterly",
+                            "yearly"
+                        ],
+                        "nullable": true
+                    },
+                    "recurring_interval": {
+                        "type": "integer",
+                        "maximum": 12,
+                        "minimum": 1,
+                        "nullable": true
+                    },
+                    "recurring_end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "is_cleared": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "BulkCreateTransactionRequest": {
+                "title": "Bulk Create Transactions Request",
+                "description": "Request body for creating multiple transactions at once",
+                "required": [
+                    "transactions"
+                ],
+                "properties": {
+                    "transactions": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "account_id",
+                                "category_id",
+                                "description",
+                                "amount",
+                                "type",
+                                "date"
+                            ],
+                            "properties": {
+                                "account_id": {
+                                    "type": "integer"
+                                },
+                                "category_id": {
+                                    "type": "integer"
+                                },
+                                "transfer_account_id": {
+                                    "type": "integer",
+                                    "nullable": true
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "maxLength": 255
+                                },
+                                "amount": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "minimum": 0.01
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "income",
+                                        "expense",
+                                        "transfer"
+                                    ]
+                                },
+                                "date": {
+                                    "type": "string",
+                                    "format": "date"
+                                },
+                                "notes": {
+                                    "type": "string",
+                                    "maxLength": 1000,
+                                    "nullable": true
+                                },
+                                "tags": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "reference_number": {
+                                    "type": "string",
+                                    "maxLength": 50,
+                                    "nullable": true
+                                },
+                                "location": {
+                                    "type": "string",
+                                    "maxLength": 255,
+                                    "nullable": true
+                                },
+                                "is_cleared": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "maxItems": 100,
+                        "minItems": 1
+                    }
+                },
+                "type": "object"
+            },
+            "BulkDeleteTransactionRequest": {
+                "title": "Bulk Delete Transactions Request",
+                "description": "Request body for deleting multiple transactions",
+                "required": [
+                    "transaction_ids"
+                ],
+                "properties": {
+                    "transaction_ids": {
+                        "description": "Array of transaction IDs to delete",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "minItems": 1,
+                        "example": [
+                            123,
+                            124,
+                            125
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "ImportTransactionRequest": {
+                "title": "Import Transactions Request",
+                "description": "Request body for importing transactions from CSV",
+                "required": [
+                    "csv_file"
+                ],
+                "properties": {
+                    "csv_file": {
+                        "description": "CSV file containing transactions",
+                        "type": "string",
+                        "format": "binary"
+                    },
+                    "column_mappings": {
+                        "description": "Mapping of CSV columns to transaction fields",
+                        "properties": {
+                            "date": {
+                                "type": "string",
+                                "example": "Transaction Date"
+                            },
+                            "description": {
+                                "type": "string",
+                                "example": "Description"
+                            },
+                            "amount": {
+                                "type": "string",
+                                "example": "Amount"
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "Type"
+                            },
+                            "category": {
+                                "type": "string",
+                                "example": "Category"
+                            },
+                            "account": {
+                                "type": "string",
+                                "example": "Account"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "import_options": {
+                        "properties": {
+                            "skip_duplicates": {
+                                "type": "boolean",
+                                "default": true
+                            },
+                            "date_format": {
+                                "type": "string",
+                                "default": "Y-m-d",
+                                "example": "Y-m-d"
+                            },
+                            "default_account_id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "default_category_id": {
+                                "type": "integer",
+                                "example": 5
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "TransactionResource": {
+                "title": "Transaction Resource",
+                "description": "Transaction resource response",
+                "properties": {
+                    "id": {
+                        "description": "Transaction ID",
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "description": {
+                        "description": "Transaction description",
+                        "type": "string",
+                        "example": "Weekly groceries"
+                    },
+                    "amount": {
+                        "description": "Transaction amount",
+                        "type": "number",
+                        "format": "float",
+                        "example": 125.5
+                    },
+                    "formatted_amount": {
+                        "description": "Formatted amount with currency and sign",
+                        "type": "string",
+                        "example": "-$125.50"
+                    },
+                    "type": {
+                        "description": "Transaction type",
+                        "type": "string",
+                        "enum": [
+                            "income",
+                            "expense",
+                            "transfer"
+                        ],
+                        "example": "expense"
+                    },
+                    "type_label": {
+                        "description": "Human-readable type label",
+                        "type": "string",
+                        "example": "Expense"
+                    },
+                    "date": {
+                        "description": "Transaction date",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15"
+                    },
+                    "formatted_date": {
+                        "description": "Human-readable date",
+                        "type": "string",
+                        "example": "Jan 15, 2024"
+                    },
+                    "notes": {
+                        "description": "Transaction notes",
+                        "type": "string",
+                        "example": "Bought vegetables and fruits",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "description": "Transaction tags",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "groceries",
+                            "food",
+                            "essential"
+                        ]
+                    },
+                    "reference_number": {
+                        "description": "Reference number",
+                        "type": "string",
+                        "example": "INV-2024-001",
+                        "nullable": true
+                    },
+                    "location": {
+                        "description": "Transaction location",
+                        "type": "string",
+                        "example": "Walmart Superstore",
+                        "nullable": true
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "size": {
+                                    "type": "integer"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                },
+                                "thumbnail": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "is_image": {
+                                    "type": "boolean"
+                                },
+                                "uploaded_at": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "is_recurring": {
+                        "description": "Whether transaction is recurring",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "recurring_type": {
+                        "type": "string",
+                        "enum": [
+                            "weekly",
+                            "monthly",
+                            "quarterly",
+                            "yearly"
+                        ],
+                        "example": "monthly",
+                        "nullable": true
+                    },
+                    "recurring_interval": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "recurring_end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-12-31",
+                        "nullable": true
+                    },
+                    "is_cleared": {
+                        "description": "Whether transaction is cleared",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "cleared_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:00:00Z",
+                        "nullable": true
+                    },
+                    "sync_id": {
+                        "description": "External sync ID",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "synced_at": {
+                        "description": "Last sync timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "account": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Checking Account"
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "checking"
+                            },
+                            "color": {
+                                "type": "string",
+                                "example": "#2196F3"
+                            },
+                            "icon": {
+                                "type": "string",
+                                "example": "account_balance"
+                            },
+                            "currency": {
+                                "type": "string",
+                                "example": "USD"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "category": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 5
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Groceries"
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "expense"
+                            },
+                            "color": {
+                                "type": "string",
+                                "example": "#4CAF50"
+                            },
+                            "icon": {
+                                "type": "string",
+                                "example": "shopping_cart"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "transfer_account": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            },
+                            "color": {
+                                "type": "string"
+                            },
+                            "icon": {
+                                "type": "string"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z"
+                    },
+                    "created_at_human": {
+                        "description": "Human-readable creation time",
+                        "type": "string",
+                        "example": "2 hours ago"
+                    },
+                    "updated_at_human": {
+                        "description": "Human-readable update time",
+                        "type": "string",
+                        "example": "30 minutes ago"
+                    },
+                    "is_transfer": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "is_income": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "is_expense": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "has_attachments": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "attachment_count": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "has_tags": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "tag_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "has_notes": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_future": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "is_today": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "days_ago": {
+                        "description": "Days since the transaction",
+                        "type": "integer",
+                        "example": 5
+                    }
+                },
+                "type": "object"
+            },
+            "TransactionSummary": {
+                "title": "Transaction Summary",
+                "description": "Summary statistics for transactions",
+                "properties": {
+                    "total_income": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 5000
+                    },
+                    "total_expenses": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 3250.75
+                    },
+                    "net_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1749.25
+                    },
+                    "transaction_count": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "average_income": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 2500
+                    },
+                    "average_expense": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 325.08
+                    },
+                    "largest_income": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 3000
+                    },
+                    "largest_expense": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 850.5
+                    }
+                },
+                "type": "object"
+            },
+            "ImportTransactionResult": {
+                "title": "Import Transaction Result",
+                "description": "Result of transaction import operation",
+                "properties": {
+                    "imported": {
+                        "description": "Number of successfully imported transactions",
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "skipped": {
+                        "description": "Number of skipped transactions (duplicates)",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "line": {
+                                    "type": "integer",
+                                    "example": 5
+                                },
+                                "error": {
+                                    "type": "string",
+                                    "example": "Invalid date format"
+                                },
+                                "data": {
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "total_processed": {
+                        "description": "Total number of rows processed",
+                        "type": "integer",
+                        "example": 28
+                    }
+                },
+                "type": "object"
+            },
+            "TransactionValidationError": {
+                "title": "Transaction Validation Error Response",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "The given data was invalid."
+                    },
+                    "errors": {
+                        "properties": {
+                            "account_id": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "The selected account does not belong to you."
+                                }
+                            },
+                            "category_id": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Category type does not match transaction type."
+                                }
+                            },
+                            "transfer_account_id": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Transfer account is required for transfer transactions."
+                                }
+                            },
+                            "amount": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "The amount must be at least 0.01."
+                                }
+                            },
+                            "date": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "The transaction date cannot be in the future."
+                                }
+                            },
+                            "transaction": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "Cannot modify critical fields of cleared transactions older than 30 days."
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "User": {
                 "title": "User",
                 "description": "User model",
@@ -4592,6 +8938,18 @@
         {
             "name": "Accounts",
             "description": "Account management endpoints"
+        },
+        {
+            "name": "Transactions",
+            "description": "Transaction management endpoints"
+        },
+        {
+            "name": "Categories",
+            "description": "Category management endpoints"
+        },
+        {
+            "name": "Budgets",
+            "description": "Budget management endpoints"
         },
         {
             "name": "System",
