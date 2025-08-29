@@ -20,7 +20,42 @@ class AnalyticsController extends Controller
 
     /**
      * Get dashboard summary
-     * GET /api/analytics/dashboard
+     *
+     * @OA\Get(
+     *     path="/api/analytics/dashboard",
+     *     summary="Get dashboard summary",
+     *     tags={"Analytics"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for dashboard data",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"day","week","month","quarter","year"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="date",
+     *         in="query",
+     *         description="Reference date for dashboard data",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Dashboard data retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="summary", type="object"),
+     *                 @OA\Property(property="income_sources", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="expense_categories", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="daily_breakdown", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="top_expenses", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function dashboard(Request $request): JsonResponse
     {
@@ -43,7 +78,62 @@ class AnalyticsController extends Controller
 
     /**
      * Get income vs expenses data
-     * GET /api/analytics/income-vs-expenses
+     *
+     * @OA\Get(
+     *     path="/api/analytics/income-vs-expenses",
+     *     summary="Get income vs expenses data",
+     *     tags={"Analytics"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for comparison",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"week","month","quarter","year"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Start date for comparison",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="End date for comparison",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="group_by",
+     *         in="query",
+     *         description="Group results by period",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"day","week","month","year"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="account_ids",
+     *         in="query",
+     *         description="Filter by account IDs",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Income vs expenses data retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="date_range", type="object"),
+     *                 @OA\Property(property="group_by", type="string"),
+     *                 @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="summary", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function incomeVsExpenses(Request $request): JsonResponse
     {
@@ -80,7 +170,57 @@ class AnalyticsController extends Controller
 
     /**
      * Get spending trends
-     * GET /api/analytics/spending-trends
+     *
+     * @OA\Get(
+     *     path="/api/analytics/spending-trends",
+     *     summary="Get spending trends",
+     *     tags={"Analytics"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for trends",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"3months","6months","year","2years"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Start date for trends",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="End date for trends",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="category_ids",
+     *         in="query",
+     *         description="Filter by category IDs",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="account_ids",
+     *         in="query",
+     *         description="Filter by account IDs",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Spending trends retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function spendingTrends(Request $request): JsonResponse
     {
@@ -118,7 +258,64 @@ class AnalyticsController extends Controller
 
     /**
      * Get category breakdown
-     * GET /api/analytics/category-breakdown
+     *
+     * @OA\Get(
+     *     path="/api/analytics/category-breakdown",
+     *     summary="Get category breakdown",
+     *     tags={"Analytics"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for breakdown",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"week","month","quarter","year"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Start date for breakdown",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="End date for breakdown",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Transaction type",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"income","expense","all"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="account_ids",
+     *         in="query",
+     *         description="Filter by account IDs",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Limit number of categories",
+     *         required=false,
+     *         @OA\Schema(type="integer", minimum=1, maximum=50)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Category breakdown retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function categoryBreakdown(Request $request): JsonResponse
     {
@@ -296,7 +493,47 @@ class AnalyticsController extends Controller
 
     /**
      * Get budget performance
-     * GET /api/analytics/budget-performance
+     *
+     * @OA\Get(
+     *     path="/api/analytics/budget-performance",
+     *     summary="Get budget performance",
+     *     tags={"Analytics"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Period for budget performance",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"current","month","quarter","year"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="budget_ids",
+     *         in="query",
+     *         description="Filter by budget IDs",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="category_ids",
+     *         in="query",
+     *         description="Filter by category IDs",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Budget performance retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="overall_performance", type="number"),
+     *                 @OA\Property(property="budgets", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="summary", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function budgetPerformance(Request $request): JsonResponse
     {
@@ -359,7 +596,41 @@ class AnalyticsController extends Controller
 
     /**
      * Get custom report
-     * POST /api/analytics/custom-report
+     *
+     * @OA\Post(
+     *     path="/api/analytics/custom-report",
+     *     summary="Generate custom report",
+     *     tags={"Analytics"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"report_type","metrics"},
+     *             @OA\Property(property="report_type", type="string", enum={"transactions","summary","comparison","forecast"}),
+     *             @OA\Property(property="metrics", type="array", @OA\Items(type="string", enum={"income","expense","balance","savings","category_spending","account_balance"})),
+     *             @OA\Property(property="filters", type="object"),
+     *             @OA\Property(property="group_by", type="string", enum={"day","week","month","quarter","year","category","account"}),
+     *             @OA\Property(property="start_date", type="string", format="date"),
+     *             @OA\Property(property="end_date", type="string", format="date"),
+     *             @OA\Property(property="format", type="string", enum={"json","csv","pdf"})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Custom report generated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="report_type", type="string"),
+     *                 @OA\Property(property="generated_at", type="string"),
+     *                 @OA\Property(property="parameters", type="object"),
+     *                 @OA\Property(property="data", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function customReport(Request $request): JsonResponse
     {

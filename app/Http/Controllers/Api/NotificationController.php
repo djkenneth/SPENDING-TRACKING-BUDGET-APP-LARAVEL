@@ -14,7 +14,85 @@ class NotificationController extends Controller
 {
     /**
      * Get all notifications with filtering and pagination
-     * GET /api/notifications
+     *
+     * @OA\Get(
+     *     path="/api/notifications",
+     *     summary="Get all notifications with filtering and pagination",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", minimum=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", minimum=1, maximum=100)
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filter by notification type",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"budget_alert","bill_reminder","goal_milestone","low_balance","system","transaction"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="priority",
+     *         in="query",
+     *         description="Filter by priority",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"low","normal","high"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="is_read",
+     *         in="query",
+     *         description="Filter by read status",
+     *         required=false,
+     *         @OA\Schema(type="boolean")
+     *     ),
+     *     @OA\Parameter(
+     *         name="channel",
+     *         in="query",
+     *         description="Filter by channel",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"app","email","sms"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Filter notifications from this date",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="Filter notifications until this date",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/NotificationResource")),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="unread_count", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -82,7 +160,36 @@ class NotificationController extends Controller
 
     /**
      * Create a new notification
-     * POST /api/notifications
+     *
+     * @OA\Post(
+     *     path="/api/notifications",
+     *     summary="Create a new notification",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"type","title","message"},
+     *             @OA\Property(property="type", type="string", enum={"budget_alert","bill_reminder","goal_milestone","low_balance","system","transaction"}),
+     *             @OA\Property(property="title", type="string", maxLength=255),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="priority", type="string", enum={"low","normal","high"}),
+     *             @OA\Property(property="channel", type="string", enum={"app","email","sms"})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Notification created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/NotificationResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function store(Request $request): JsonResponse
     {
@@ -114,7 +221,30 @@ class NotificationController extends Controller
 
     /**
      * Get a specific notification
-     * GET /api/notifications/{id}
+     *
+     * @OA\Get(
+     *     path="/api/notifications/{id}",
+     *     summary="Get a specific notification",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Notification ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/NotificationResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Notification not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function show(Request $request, Notification $notification): JsonResponse
     {
@@ -134,7 +264,31 @@ class NotificationController extends Controller
 
     /**
      * Mark a notification as read
-     * PUT /api/notifications/{id}/read
+     *
+     * @OA\Put(
+     *     path="/api/notifications/{id}/read",
+     *     summary="Mark a notification as read",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Notification ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Notification marked as read",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/NotificationResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Notification not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function markAsRead(Request $request, Notification $notification): JsonResponse
     {
@@ -162,7 +316,30 @@ class NotificationController extends Controller
 
     /**
      * Delete a notification
-     * DELETE /api/notifications/{id}
+     *
+     * @OA\Delete(
+     *     path="/api/notifications/{id}",
+     *     summary="Delete a notification",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Notification ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Notification deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Notification not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function destroy(Request $request, Notification $notification): JsonResponse
     {
@@ -184,7 +361,25 @@ class NotificationController extends Controller
 
     /**
      * Mark all notifications as read
-     * PUT /api/notifications/read-all
+     *
+     * @OA\Put(
+     *     path="/api/notifications/read-all",
+     *     summary="Mark all notifications as read",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="All notifications marked as read",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="updated_count", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function markAllAsRead(Request $request): JsonResponse
     {
@@ -206,7 +401,26 @@ class NotificationController extends Controller
 
     /**
      * Get unread notifications count
-     * GET /api/notifications/unread-count
+     *
+     * @OA\Get(
+     *     path="/api/notifications/status/unread-count",
+     *     summary="Get unread notifications count",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Unread count retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="total_unread", type="integer"),
+     *                 @OA\Property(property="by_type", type="object"),
+     *                 @OA\Property(property="by_priority", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function getUnreadCount(Request $request): JsonResponse
     {
@@ -238,7 +452,37 @@ class NotificationController extends Controller
 
     /**
      * Get notification settings
-     * GET /api/notifications/settings
+     *
+     * @OA\Get(
+     *     path="/api/notifications/user/settings",
+     *     summary="Get notification settings",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Settings retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="channels", type="object",
+     *                     @OA\Property(property="app", type="boolean"),
+     *                     @OA\Property(property="email", type="boolean"),
+     *                     @OA\Property(property="sms", type="boolean")
+     *                 ),
+     *                 @OA\Property(property="types", type="object",
+     *                     @OA\Property(property="budget_alert", type="boolean"),
+     *                     @OA\Property(property="bill_reminder", type="boolean"),
+     *                     @OA\Property(property="goal_milestone", type="boolean"),
+     *                     @OA\Property(property="low_balance", type="boolean"),
+     *                     @OA\Property(property="system", type="boolean"),
+     *                     @OA\Property(property="transaction", type="boolean")
+     *                 ),
+     *                 @OA\Property(property="preferences", type="object")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function getSettings(Request $request): JsonResponse
     {
@@ -276,7 +520,43 @@ class NotificationController extends Controller
 
     /**
      * Update notification settings
-     * PUT /api/notifications/settings
+     *
+     * @OA\Put(
+     *     path="/api/notifications/user/settings",
+     *     summary="Update notification settings",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="channels", type="object",
+     *                 @OA\Property(property="app", type="boolean"),
+     *                 @OA\Property(property="email", type="boolean"),
+     *                 @OA\Property(property="sms", type="boolean")
+     *             ),
+     *             @OA\Property(property="types", type="object",
+     *                 @OA\Property(property="budget_alert", type="boolean"),
+     *                 @OA\Property(property="bill_reminder", type="boolean"),
+     *                 @OA\Property(property="goal_milestone", type="boolean"),
+     *                 @OA\Property(property="low_balance", type="boolean"),
+     *                 @OA\Property(property="system", type="boolean"),
+     *                 @OA\Property(property="transaction", type="boolean")
+     *             ),
+     *             @OA\Property(property="preferences", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Settings updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function updateSettings(Request $request): JsonResponse
     {
@@ -370,7 +650,7 @@ class NotificationController extends Controller
         $period = $request->input('period', 'month');
 
         // Determine date range based on period
-        $startDate = match($period) {
+        $startDate = match ($period) {
             'today' => Carbon::today(),
             'week' => Carbon::now()->startOfWeek(),
             'month' => Carbon::now()->startOfMonth(),
