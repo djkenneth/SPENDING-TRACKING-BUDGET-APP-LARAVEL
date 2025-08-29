@@ -1332,6 +1332,655 @@
                 ]
             }
         },
+        "/api/analytics/dashboard": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get dashboard summary",
+                "description": "Get dashboard summary",
+                "operationId": "3fa1b45814c5fe08d29ecfe103e98281",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for dashboard data",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "day",
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Reference date for dashboard data",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dashboard data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "summary": {
+                                                    "type": "object"
+                                                },
+                                                "income_sources": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "expense_categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "daily_breakdown": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "top_expenses": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/analytics/income-vs-expenses": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get income vs expenses data",
+                "description": "Get income vs expenses data",
+                "operationId": "1800c22ecb4bea4004018adce1a27c09",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for comparison",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for comparison",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for comparison",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "group_by",
+                        "in": "query",
+                        "description": "Group results by period",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "day",
+                                "week",
+                                "month",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "account_ids",
+                        "in": "query",
+                        "description": "Filter by account IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Income vs expenses data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "date_range": {
+                                                    "type": "object"
+                                                },
+                                                "group_by": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "summary": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/analytics/spending-trends": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get spending trends",
+                "description": "Get spending trends",
+                "operationId": "73f90b932fc5ab489e35b92def74485e",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for trends",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "3months",
+                                "6months",
+                                "year",
+                                "2years"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for trends",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for trends",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "category_ids",
+                        "in": "query",
+                        "description": "Filter by category IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "account_ids",
+                        "in": "query",
+                        "description": "Filter by account IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Spending trends retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/analytics/category-breakdown": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get category breakdown",
+                "description": "Get category breakdown",
+                "operationId": "596ebed9a7f43478ad8fa1061e3ce027",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Time period for breakdown",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "week",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for breakdown",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for breakdown",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Transaction type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "income",
+                                "expense",
+                                "all"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "account_ids",
+                        "in": "query",
+                        "description": "Filter by account IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Limit number of categories",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 50,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category breakdown retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/analytics/budget-performance": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get budget performance",
+                "description": "Get budget performance",
+                "operationId": "8a6dccfaa9b9cab0cf0a4d9c954c7e4f",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Period for budget performance",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "current",
+                                "month",
+                                "quarter",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "budget_ids",
+                        "in": "query",
+                        "description": "Filter by budget IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "category_ids",
+                        "in": "query",
+                        "description": "Filter by category IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Budget performance retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "overall_performance": {
+                                                    "type": "number"
+                                                },
+                                                "budgets": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "summary": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/analytics/custom-report": {
+            "post": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Generate custom report",
+                "description": "Get custom report",
+                "operationId": "2284a68886dacf98f82397f67335b60f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "report_type",
+                                    "metrics"
+                                ],
+                                "properties": {
+                                    "report_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "transactions",
+                                            "summary",
+                                            "comparison",
+                                            "forecast"
+                                        ]
+                                    },
+                                    "metrics": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "income",
+                                                "expense",
+                                                "balance",
+                                                "savings",
+                                                "category_spending",
+                                                "account_balance"
+                                            ]
+                                        }
+                                    },
+                                    "filters": {
+                                        "type": "object"
+                                    },
+                                    "group_by": {
+                                        "type": "string",
+                                        "enum": [
+                                            "day",
+                                            "week",
+                                            "month",
+                                            "quarter",
+                                            "year",
+                                            "category",
+                                            "account"
+                                        ]
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "enum": [
+                                            "json",
+                                            "csv",
+                                            "pdf"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Custom report generated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "report_type": {
+                                                    "type": "string"
+                                                },
+                                                "generated_at": {
+                                                    "type": "string"
+                                                },
+                                                "parameters": {
+                                                    "type": "object"
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/auth/register": {
             "post": {
                 "tags": [
@@ -5694,6 +6343,695 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get all notifications with filtering and pagination",
+                "description": "Get all notifications with filtering and pagination",
+                "operationId": "6d56a555955089a73fdf3f7229e8ead8",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter by notification type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "budget_alert",
+                                "bill_reminder",
+                                "goal_milestone",
+                                "low_balance",
+                                "system",
+                                "transaction"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "description": "Filter by priority",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "normal",
+                                "high"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_read",
+                        "in": "query",
+                        "description": "Filter by read status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "channel",
+                        "in": "query",
+                        "description": "Filter by channel",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "app",
+                                "email",
+                                "sms"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Filter notifications from this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Filter notifications until this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NotificationResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "unread_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Create a new notification",
+                "description": "Create a new notification",
+                "operationId": "5e12e1940735be8dea4ffa6c52938048",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "title",
+                                    "message"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "budget_alert",
+                                            "bill_reminder",
+                                            "goal_milestone",
+                                            "low_balance",
+                                            "system",
+                                            "transaction"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "message": {
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "type": "object"
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "enum": [
+                                            "low",
+                                            "normal",
+                                            "high"
+                                        ]
+                                    },
+                                    "channel": {
+                                        "type": "string",
+                                        "enum": [
+                                            "app",
+                                            "email",
+                                            "sms"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Notification created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/{id}": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get a specific notification",
+                "description": "Get a specific notification",
+                "operationId": "4b6792a65cdd7f79b06bff8158d28094",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Notification ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Notification not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Delete a notification",
+                "description": "Delete a notification",
+                "operationId": "ab7264b840570ab1351fff8ba6732bdc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Notification ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Notification not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/{id}/read": {
+            "put": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark a notification as read",
+                "description": "Mark a notification as read",
+                "operationId": "bf4a71383df08623c93c72b3103d323e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Notification ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification marked as read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Notification not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/read-all": {
+            "put": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark all notifications as read",
+                "description": "Mark all notifications as read",
+                "operationId": "02988ec1ebbf6620f0464259ee734ba4",
+                "responses": {
+                    "200": {
+                        "description": "All notifications marked as read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "updated_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/status/unread-count": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get unread notifications count",
+                "description": "Get unread notifications count",
+                "operationId": "9d0ea3004c88343b889e729fc2824f65",
+                "responses": {
+                    "200": {
+                        "description": "Unread count retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_unread": {
+                                                    "type": "integer"
+                                                },
+                                                "by_type": {
+                                                    "type": "object"
+                                                },
+                                                "by_priority": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/user/settings": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get notification settings",
+                "description": "Get notification settings",
+                "operationId": "53cf0cb5ccc9ca93173a74b905e17899",
+                "responses": {
+                    "200": {
+                        "description": "Settings retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "channels": {
+                                                    "properties": {
+                                                        "app": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "email": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "sms": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "types": {
+                                                    "properties": {
+                                                        "budget_alert": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "bill_reminder": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "goal_milestone": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "low_balance": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "system": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "transaction": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "preferences": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Update notification settings",
+                "description": "Update notification settings",
+                "operationId": "835fb13e5e530f37ea24a6ffb7edd346",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "channels": {
+                                        "properties": {
+                                            "app": {
+                                                "type": "boolean"
+                                            },
+                                            "email": {
+                                                "type": "boolean"
+                                            },
+                                            "sms": {
+                                                "type": "boolean"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "types": {
+                                        "properties": {
+                                            "budget_alert": {
+                                                "type": "boolean"
+                                            },
+                                            "bill_reminder": {
+                                                "type": "boolean"
+                                            },
+                                            "goal_milestone": {
+                                                "type": "boolean"
+                                            },
+                                            "low_balance": {
+                                                "type": "boolean"
+                                            },
+                                            "system": {
+                                                "type": "boolean"
+                                            },
+                                            "transaction": {
+                                                "type": "boolean"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "preferences": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Settings updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/transactions": {
@@ -11181,6 +12519,433 @@
                 },
                 "type": "object"
             },
+            "NotificationResource": {
+                "title": "Notification Resource",
+                "description": "Notification resource representation",
+                "properties": {
+                    "id": {
+                        "description": "Notification ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "type": {
+                        "description": "Notification type",
+                        "type": "string",
+                        "enum": [
+                            "budget_alert",
+                            "bill_reminder",
+                            "goal_milestone",
+                            "low_balance",
+                            "system",
+                            "transaction"
+                        ],
+                        "example": "budget_alert"
+                    },
+                    "type_label": {
+                        "description": "Human-readable type label",
+                        "type": "string",
+                        "example": "Budget Alert"
+                    },
+                    "title": {
+                        "description": "Notification title",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Budget Alert: Groceries"
+                    },
+                    "message": {
+                        "description": "Notification message",
+                        "type": "string",
+                        "example": "You have used 85% of your Groceries budget for this month."
+                    },
+                    "data": {
+                        "description": "Additional notification data",
+                        "type": "object",
+                        "example": {
+                            "budget_id": 1,
+                            "percentage": 85,
+                            "category": "Groceries"
+                        },
+                        "nullable": true
+                    },
+                    "is_read": {
+                        "description": "Read status",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "read_at": {
+                        "description": "Timestamp when notification was read",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T14:30:00.000000Z",
+                        "nullable": true
+                    },
+                    "priority": {
+                        "description": "Notification priority",
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "normal",
+                            "high"
+                        ],
+                        "example": "high"
+                    },
+                    "priority_label": {
+                        "description": "Human-readable priority label",
+                        "type": "string",
+                        "example": "High"
+                    },
+                    "channel": {
+                        "description": "Notification channel",
+                        "type": "string",
+                        "enum": [
+                            "app",
+                            "email",
+                            "sms"
+                        ],
+                        "example": "app"
+                    },
+                    "channel_label": {
+                        "description": "Human-readable channel label",
+                        "type": "string",
+                        "example": "In-App"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T10:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-15T10:00:00.000000Z"
+                    },
+                    "created_at_human": {
+                        "description": "Human-readable creation time",
+                        "type": "string",
+                        "example": "2 hours ago"
+                    },
+                    "read_at_human": {
+                        "description": "Human-readable read time",
+                        "type": "string",
+                        "example": "30 minutes ago",
+                        "nullable": true
+                    },
+                    "icon": {
+                        "description": "Icon identifier for the notification type",
+                        "type": "string",
+                        "example": "trending_up"
+                    },
+                    "color": {
+                        "description": "Color for the notification type",
+                        "type": "string",
+                        "example": "warning"
+                    },
+                    "action_url": {
+                        "description": "URL for related action",
+                        "type": "string",
+                        "example": "/budgets/1",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "NotificationCollection": {
+                "title": "Notification Collection",
+                "description": "Collection of notification resources",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/NotificationResource"
+                        }
+                    },
+                    "links": {
+                        "properties": {
+                            "first": {
+                                "type": "string",
+                                "example": "http://api.example.com/notifications?page=1"
+                            },
+                            "last": {
+                                "type": "string",
+                                "example": "http://api.example.com/notifications?page=10"
+                            },
+                            "prev": {
+                                "type": "string",
+                                "example": null,
+                                "nullable": true
+                            },
+                            "next": {
+                                "type": "string",
+                                "example": "http://api.example.com/notifications?page=2",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "meta": {
+                        "properties": {
+                            "current_page": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "from": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "last_page": {
+                                "type": "integer",
+                                "example": 10
+                            },
+                            "links": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "active": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "path": {
+                                "type": "string",
+                                "example": "http://api.example.com/notifications"
+                            },
+                            "per_page": {
+                                "type": "integer",
+                                "example": 20
+                            },
+                            "to": {
+                                "type": "integer",
+                                "example": 20
+                            },
+                            "total": {
+                                "type": "integer",
+                                "example": 200
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "NotificationCreateRequest": {
+                "title": "Notification Create Request",
+                "description": "Request body for creating a notification",
+                "required": [
+                    "type",
+                    "title",
+                    "message"
+                ],
+                "properties": {
+                    "type": {
+                        "description": "Notification type",
+                        "type": "string",
+                        "enum": [
+                            "budget_alert",
+                            "bill_reminder",
+                            "goal_milestone",
+                            "low_balance",
+                            "system",
+                            "transaction"
+                        ],
+                        "example": "budget_alert"
+                    },
+                    "title": {
+                        "description": "Notification title",
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Budget Alert: Groceries"
+                    },
+                    "message": {
+                        "description": "Notification message",
+                        "type": "string",
+                        "example": "You have used 85% of your Groceries budget for this month."
+                    },
+                    "data": {
+                        "description": "Additional notification data",
+                        "type": "object",
+                        "example": {
+                            "budget_id": 1,
+                            "percentage": 85
+                        },
+                        "nullable": true
+                    },
+                    "priority": {
+                        "description": "Notification priority",
+                        "type": "string",
+                        "default": "normal",
+                        "enum": [
+                            "low",
+                            "normal",
+                            "high"
+                        ],
+                        "example": "high"
+                    },
+                    "channel": {
+                        "description": "Notification channel",
+                        "type": "string",
+                        "default": "app",
+                        "enum": [
+                            "app",
+                            "email",
+                            "sms"
+                        ],
+                        "example": "app"
+                    }
+                },
+                "type": "object"
+            },
+            "NotificationSettingsResponse": {
+                "title": "Notification Settings Response",
+                "description": "User notification settings",
+                "properties": {
+                    "channels": {
+                        "description": "Enabled notification channels",
+                        "properties": {
+                            "app": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "email": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "sms": {
+                                "type": "boolean",
+                                "example": false
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "types": {
+                        "description": "Enabled notification types",
+                        "properties": {
+                            "budget_alert": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "bill_reminder": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "goal_milestone": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "low_balance": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "system": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "transaction": {
+                                "type": "boolean",
+                                "example": false
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "preferences": {
+                        "description": "Additional preferences",
+                        "properties": {
+                            "quiet_hours_enabled": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "quiet_hours_start": {
+                                "type": "string",
+                                "example": "22:00"
+                            },
+                            "quiet_hours_end": {
+                                "type": "string",
+                                "example": "08:00"
+                            },
+                            "alert_threshold_percentage": {
+                                "type": "integer",
+                                "example": 75
+                            },
+                            "bill_reminder_days": {
+                                "type": "integer",
+                                "example": 3
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "NotificationUnreadCountResponse": {
+                "title": "Notification Unread Count Response",
+                "description": "Unread notification count breakdown",
+                "properties": {
+                    "total_unread": {
+                        "description": "Total number of unread notifications",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "by_type": {
+                        "description": "Unread count by notification type",
+                        "properties": {
+                            "budget_alert": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "bill_reminder": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "goal_milestone": {
+                                "type": "integer",
+                                "example": 0
+                            },
+                            "low_balance": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "system": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "transaction": {
+                                "type": "integer",
+                                "example": 0
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "by_priority": {
+                        "description": "Unread count by priority",
+                        "properties": {
+                            "low": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "normal": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "high": {
+                                "type": "integer",
+                                "example": 2
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "LoginRequest": {
                 "required": [
                     "email",
@@ -12546,6 +14311,14 @@
         {
             "name": "Bills",
             "description": "Bills and subscriptions endpoints"
+        },
+        {
+            "name": "Notifications",
+            "description": "Notification endpoints"
+        },
+        {
+            "name": "Analytics",
+            "description": "Analytics and reporting endpoints"
         },
         {
             "name": "Financial Goals",
