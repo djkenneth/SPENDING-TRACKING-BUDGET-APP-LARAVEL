@@ -26,8 +26,31 @@ class SettingsController extends Controller
     /**
      * Get all user settings
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/settings",
+     *     summary="Get all user settings",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 additionalProperties=true,
+     *                 example={
+     *                     "theme": "dark",
+     *                     "notifications_enabled": true,
+     *                     "currency": "USD",
+     *                     "timezone": "America/New_York",
+     *                     "language": "en"
+     *                 }
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -68,8 +91,32 @@ class SettingsController extends Controller
     /**
      * Update user settings
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Put(
+     *     path="/api/settings",
+     *     summary="Update user settings",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"settings"},
+     *             @OA\Property(
+     *                 property="settings",
+     *                 type="object",
+     *                 additionalProperties=true
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Settings updated successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
      */
     public function update(Request $request): JsonResponse
     {
@@ -122,8 +169,36 @@ class SettingsController extends Controller
     /**
      * Get user preferences
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/settings/preferences",
+     *     summary="Get user preferences",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 example={
+     *                      "theme": "auto",
+     *                      "date_format": "DD/MM/YYYY",
+     *                      "number_format": "1,000.00",
+     *                      "start_of_week": 1,
+     *                      "budget_period": "monthly",
+     *                      "show_account_balance": true,
+     *                      "show_category_icons": true,
+     *                      "enable_sound": true,
+     *                      "auto_backup": false,
+     *                      "default_account_id": null,
+     *                      "default_category_id": null
+     *                 }
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getPreferences(Request $request): JsonResponse
     {
@@ -153,8 +228,22 @@ class SettingsController extends Controller
     /**
      * Update user preferences
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Put(
+     *     path="/api/settings/preferences",
+     *     summary="Update user preferences",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="preferences", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success"
+     *     )
+     * )
      */
     public function updatePreferences(Request $request): JsonResponse
     {
@@ -206,8 +295,34 @@ class SettingsController extends Controller
     /**
      * Create data backup
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Post(
+     *     path="/api/settings/backup",
+     *     summary="Create data backup",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="include_attachments", type="boolean", default=false),
+     *             @OA\Property(property="password", type="string", description="Optional password for encryption")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Backup created successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="filename", type="string"),
+     *                 @OA\Property(property="size", type="integer"),
+     *                 @OA\Property(property="download_url", type="string"),
+     *                 @OA\Property(property="expires_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function createBackup(Request $request): JsonResponse
     {
@@ -236,16 +351,16 @@ class SettingsController extends Controller
             // $backup = $this->backupService->createBackup($user, $options);
 
             // if ($backup['success']) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Backup created successfully',
-                    // 'data' => [
-                    //     'filename' => $backup['filename'],
-                    //     'size' => $backup['size'],
-                    //     'download_url' => $backup['url'],
-                    //     'expires_at' => $backup['expires_at'],
-                    // ],
-                ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Backup created successfully',
+                // 'data' => [
+                //     'filename' => $backup['filename'],
+                //     'size' => $backup['size'],
+                //     'download_url' => $backup['url'],
+                //     'expires_at' => $backup['expires_at'],
+                // ],
+            ]);
             // }
 
             // return response()->json([
@@ -267,8 +382,41 @@ class SettingsController extends Controller
     /**
      * Restore from backup
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Post(
+     *     path="/api/settings/restore",
+     *     summary="Restore from backup",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"backup_file"},
+     *                 @OA\Property(
+     *                     property="backup_file",
+     *                     type="string",
+     *                     format="binary"
+     *                 ),
+     *                 @OA\Property(property="password", type="string"),
+     *                 @OA\Property(property="overwrite", type="boolean", default=false)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Backup restored successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="restored_items", type="object")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function restoreBackup(Request $request): JsonResponse
     {
@@ -327,8 +475,40 @@ class SettingsController extends Controller
     /**
      * Export user data
      *
-     * @param Request $request
-     * @return JsonResponse|\Symfony\Component\HttpFoundation\StreamedResponse
+     * @OA\Post(
+     *     path="/api/settings/export",
+     *     summary="Export user data",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="format", type="string", enum={"json", "csv", "xlsx"}, default="json"),
+     *             @OA\Property(
+     *                 property="data_types",
+     *                 type="array",
+     *                 @OA\Items(type="string", enum={"transactions", "accounts", "budgets", "categories", "goals"})
+     *             ),
+     *             @OA\Property(property="date_from", type="string", format="date"),
+     *             @OA\Property(property="date_to", type="string", format="date")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="download_url", type="string"),
+     *                 @OA\Property(property="filename", type="string"),
+     *                 @OA\Property(property="size", type="integer"),
+     *                 @OA\Property(property="expires_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function exportData(Request $request)
     {
@@ -392,8 +572,44 @@ class SettingsController extends Controller
     /**
      * Import user data
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Post(
+     *     path="/api/settings/import",
+     *     summary="Import user data",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"import_file"},
+     *                 @OA\Property(
+     *                     property="import_file",
+     *                     type="string",
+     *                     format="binary"
+     *                 ),
+     *                 @OA\Property(property="format", type="string", enum={"json", "csv", "xlsx"}),
+     *                 @OA\Property(property="data_type", type="string", enum={"transactions", "accounts", "budgets", "categories"}),
+     *                 @OA\Property(property="duplicate_action", type="string", enum={"skip", "update", "create"}, default="skip")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="imported", type="integer"),
+     *                 @OA\Property(property="skipped", type="integer"),
+     *                 @OA\Property(property="errors", type="array", @OA\Items(type="string"))
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function importData(Request $request): JsonResponse
     {
@@ -457,8 +673,31 @@ class SettingsController extends Controller
     /**
      * Get notification settings
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/settings/notifications",
+     *     summary="Get notification settings",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="email_notifications", type="boolean"),
+     *                 @OA\Property(property="push_notifications", type="boolean"),
+     *                 @OA\Property(property="budget_alerts", type="boolean"),
+     *                 @OA\Property(property="transaction_alerts", type="boolean"),
+     *                 @OA\Property(property="bill_reminders", type="boolean"),
+     *                 @OA\Property(property="goal_updates", type="boolean"),
+     *                 @OA\Property(property="weekly_summary", type="boolean"),
+     *                 @OA\Property(property="monthly_report", type="boolean")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getNotificationSettings(Request $request): JsonResponse
     {
@@ -497,8 +736,28 @@ class SettingsController extends Controller
     /**
      * Update notification settings
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Put(
+     *     path="/api/settings/notifications",
+     *     summary="Update notification settings",
+     *     tags={"Settings"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="email_notifications", type="boolean"),
+     *             @OA\Property(property="push_notifications", type="boolean"),
+     *             @OA\Property(property="budget_alerts", type="boolean"),
+     *             @OA\Property(property="transaction_alerts", type="boolean"),
+     *             @OA\Property(property="bill_reminders", type="boolean"),
+     *             @OA\Property(property="goal_updates", type="boolean"),
+     *             @OA\Property(property="weekly_summary", type="boolean"),
+     *             @OA\Property(property="monthly_report", type="boolean")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success"
+     *     )
+     * )
      */
     public function updateNotificationSettings(Request $request): JsonResponse
     {

@@ -23,7 +23,39 @@ class CurrencyController extends Controller
     /**
      * Get list of supported currencies
      *
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/currencies",
+     *     summary="Get list of supported currencies",
+     *     tags={"Currency"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="code", type="string", example="USD"),
+     *                     @OA\Property(property="name", type="string", example="US Dollar"),
+     *                     @OA\Property(property="symbol", type="string", example="$"),
+     *                     @OA\Property(property="decimal_places", type="integer", example=2),
+     *                     @OA\Property(property="is_default", type="boolean", example=false)
+     *                 )
+     *             ),
+     *             @OA\Property(property="count", type="integer", example=10)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Failed to fetch currencies"),
+     *             @OA\Property(property="error", type="string")
+     *         )
+     *     )
+     * )
      */
     public function index(): JsonResponse
     {
@@ -61,8 +93,51 @@ class CurrencyController extends Controller
     /**
      * Get current exchange rates
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/exchange-rates",
+     *     summary="Get current exchange rates",
+     *     tags={"Exchange Rates"},
+     *     @OA\Parameter(
+     *         name="base_currency",
+     *         in="query",
+     *         description="Base currency code",
+     *         required=false,
+     *         @OA\Schema(type="string", minLength=3, maxLength=3)
+     *     ),
+     *     @OA\Parameter(
+     *         name="target_currencies[]",
+     *         in="query",
+     *         description="Target currency codes",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="string"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="date",
+     *         in="query",
+     *         description="Date for exchange rates",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="base_currency", type="string", example="USD"),
+     *                 @OA\Property(property="date", type="string", format="date", example="2025-01-15"),
+     *                 @OA\Property(
+     *                     property="rates",
+     *                     type="object",
+     *                     example={"EUR": 0.855, "GBP": 0.73, "JPY": 110.25}
+     *                 ),
+     *                 @OA\Property(property="last_updated", type="string", format="date-time")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getExchangeRates(Request $request): JsonResponse
     {
@@ -128,8 +203,34 @@ class CurrencyController extends Controller
     /**
      * Refresh exchange rates from external API
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Post(
+     *     path="/api/exchange-rates/refresh",
+     *     summary="Refresh exchange rates from external API",
+     *     tags={"Exchange Rates"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="currencies", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="force", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Exchange rates refreshed successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="updated_count", type="integer"),
+     *                 @OA\Property(property="rates", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="provider", type="string"),
+     *                 @OA\Property(property="timestamp", type="string", format="date-time")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function refreshExchangeRates(Request $request): JsonResponse
     {
@@ -194,8 +295,78 @@ class CurrencyController extends Controller
     /**
      * Get exchange rate history for a currency pair
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/exchange-rates/history",
+     *     summary="Get exchange rate history for a currency pair",
+     *     tags={"Exchange Rates"},
+     *     @OA\Parameter(
+     *         name="from_currency",
+     *         in="query",
+     *         required=true,
+     *         @OA\Schema(type="string", minLength=3, maxLength=3)
+     *     ),
+     *     @OA\Parameter(
+     *         name="to_currency",
+     *         in="query",
+     *         required=true,
+     *         @OA\Schema(type="string", minLength=3, maxLength=3)
+     *     ),
+     *     @OA\Parameter(
+     *         name="days",
+     *         in="query",
+     *         description="Number of days of history (1-365)",
+     *         @OA\Schema(type="integer", minimum=1, maximum=365, default=30)
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="from_currency", type="string"),
+     *                 @OA\Property(property="to_currency", type="string"),
+     *                 @OA\Property(
+     *                     property="period",
+     *                     type="object",
+     *                     @OA\Property(property="start_date", type="string", format="date"),
+     *                     @OA\Property(property="end_date", type="string", format="date"),
+     *                     @OA\Property(property="days", type="integer")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="history",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="date", type="string", format="date"),
+     *                         @OA\Property(property="rate", type="number"),
+     *                         @OA\Property(property="source", type="string"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="statistics",
+     *                     type="object",
+     *                     @OA\Property(property="min", type="number"),
+     *                     @OA\Property(property="max", type="number"),
+     *                     @OA\Property(property="average", type="number"),
+     *                     @OA\Property(property="change", type="number"),
+     *                     @OA\Property(property="change_percentage", type="number")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getExchangeRateHistory(Request $request): JsonResponse
     {
@@ -287,7 +458,58 @@ class CurrencyController extends Controller
      * Convert amount between currencies
      *
      * @param Request $request
-     * @return JsonResponse
+     *
+     * @OA\Post(
+     *     path="/api/currencies/convert",
+     *     summary="Convert amount between currencies",
+     *     tags={"Currency"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"amount", "from_currency", "to_currency"},
+     *             @OA\Property(property="amount", type="number", format="float", example=100.00),
+     *             @OA\Property(property="from_currency", type="string", minLength=3, maxLength=3, example="USD"),
+     *             @OA\Property(property="to_currency", type="string", minLength=3, maxLength=3, example="EUR"),
+     *             @OA\Property(property="date", type="string", format="date", example="2025-01-15")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="original",
+     *                     type="object",
+     *                     @OA\Property(property="amount", type="number", example=100),
+     *                     @OA\Property(property="currency", type="string", example="USD"),
+     *                     @OA\Property(property="formatted", type="string", example="$ 100.00")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="converted",
+     *                     type="object",
+     *                     @OA\Property(property="amount", type="number", example=85.50),
+     *                     @OA\Property(property="currency", type="string", example="EUR"),
+     *                     @OA\Property(property="formatted", type="string", example="€ 85.50")
+     *                 ),
+     *                 @OA\Property(property="rate", type="number", example=0.855),
+     *                 @OA\Property(property="date", type="string", format="date", example="2025-01-15"),
+     *                 @OA\Property(property="calculation", type="string", example="100 × 0.855 = 85.5")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error"
+     *     )
+     * )
      */
     public function convert(Request $request): JsonResponse
     {

@@ -25,8 +25,38 @@ class SyncController extends Controller
     /**
      * Get sync status for the user
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/sync/status",
+     *     summary="Get sync status",
+     *     tags={"Sync"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="last_sync", type="string", format="date-time"),
+     *                 @OA\Property(property="pending_changes", type="integer"),
+     *                 @OA\Property(property="sync_enabled", type="boolean"),
+     *                 @OA\Property(property="sync_frequency", type="string", example="auto"),
+     *                 @OA\Property(property="conflicts", type="integer"),
+     *                 @OA\Property(
+     *                     property="devices",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="device_id", type="string"),
+     *                         @OA\Property(property="device_name", type="string"),
+     *                         @OA\Property(property="last_sync", type="string", format="date-time"),
+     *                         @OA\Property(property="status", type="string", enum={"synced", "pending", "error"})
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getStatus(Request $request): JsonResponse
     {
@@ -90,8 +120,56 @@ class SyncController extends Controller
     /**
      * Sync offline transactions
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Post(
+     *     path="/api/sync/transactions",
+     *     summary="Sync offline transactions",
+     *     tags={"Sync"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"transactions", "device_id", "last_sync"},
+     *             @OA\Property(
+     *                 property="transactions",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="local_id", type="string"),
+     *                     @OA\Property(property="server_id", type="integer", nullable=true),
+     *                     @OA\Property(property="action", type="string", enum={"create", "update", "delete"}),
+     *                     @OA\Property(property="data", type="object"),
+     *                     @OA\Property(property="timestamp", type="string", format="date-time")
+     *                 )
+     *             ),
+     *             @OA\Property(property="device_id", type="string"),
+     *             @OA\Property(property="last_sync", type="string", format="date-time")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transactions synced successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="synced", type="integer"),
+     *                 @OA\Property(property="conflicts", type="integer"),
+     *                 @OA\Property(property="errors", type="integer"),
+     *                 @OA\Property(
+     *                     property="mapping",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="local_id", type="string"),
+     *                         @OA\Property(property="server_id", type="integer")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="server_changes", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="timestamp", type="string", format="date-time")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function syncTransactions(Request $request): JsonResponse
     {
@@ -215,8 +293,44 @@ class SyncController extends Controller
     /**
      * Perform full data sync
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Post(
+     *     path="/api/sync/full",
+     *     summary="Full data sync",
+     *     tags={"Sync"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"device_id"},
+     *             @OA\Property(property="device_id", type="string"),
+     *             @OA\Property(property="last_sync", type="string", format="date-time"),
+     *             @OA\Property(property="force", type="boolean", default=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Full sync completed successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="synced_entities",
+     *                     type="object",
+     *                     @OA\Property(property="transactions", type="integer"),
+     *                     @OA\Property(property="accounts", type="integer"),
+     *                     @OA\Property(property="categories", type="integer"),
+     *                     @OA\Property(property="budgets", type="integer"),
+     *                     @OA\Property(property="goals", type="integer")
+     *                 ),
+     *                 @OA\Property(property="conflicts_resolved", type="integer"),
+     *                 @OA\Property(property="timestamp", type="string", format="date-time")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function fullSync(Request $request): JsonResponse
     {
@@ -240,7 +354,12 @@ class SyncController extends Controller
             $lastSync = $request->input('last_sync');
             $deviceId = $request->input('device_id');
             $include = $request->input('include', [
-                'accounts', 'categories', 'budgets', 'goals', 'bills', 'transactions'
+                'accounts',
+                'categories',
+                'budgets',
+                'goals',
+                'bills',
+                'transactions'
             ]);
 
             // Start sync log
@@ -364,8 +483,32 @@ class SyncController extends Controller
     /**
      * Get sync conflicts
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/sync/conflicts",
+     *     summary="Get sync conflicts",
+     *     tags={"Sync"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="entity_type", type="string", example="transaction"),
+     *                     @OA\Property(property="entity_id", type="integer"),
+     *                     @OA\Property(property="local_data", type="object"),
+     *                     @OA\Property(property="server_data", type="object"),
+     *                     @OA\Property(property="conflict_type", type="string", enum={"update", "delete"}),
+     *                     @OA\Property(property="detected_at", type="string", format="date-time")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getConflicts(Request $request): JsonResponse
     {
@@ -407,8 +550,41 @@ class SyncController extends Controller
     /**
      * Resolve sync conflicts
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Post(
+     *     path="/api/sync/resolve-conflicts",
+     *     summary="Resolve sync conflicts",
+     *     tags={"Sync"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"resolutions"},
+     *             @OA\Property(
+     *                 property="resolutions",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="conflict_id", type="integer"),
+     *                     @OA\Property(property="resolution", type="string", enum={"keep_local", "keep_server", "merge"})
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Conflicts resolved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="resolved", type="integer"),
+     *                 @OA\Property(property="failed", type="integer"),
+     *                 @OA\Property(property="errors", type="array", @OA\Items(type="string"))
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function resolveConflicts(Request $request): JsonResponse
     {
@@ -490,8 +666,33 @@ class SyncController extends Controller
     /**
      * Get last sync timestamp
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Get(
+     *     path="/api/sync/last-sync",
+     *     summary="Get last sync timestamp",
+     *     tags={"Sync"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="device_id",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="last_sync", type="string", format="date-time"),
+     *                 @OA\Property(property="device_id", type="string", nullable=true),
+     *                 @OA\Property(property="sync_count", type="integer"),
+     *                 @OA\Property(property="next_sync", type="string", format="date-time", nullable=true)
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getLastSync(Request $request): JsonResponse
     {
@@ -542,8 +743,27 @@ class SyncController extends Controller
     /**
      * Clear sync data and reset sync state
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @OA\Delete(
+     *     path="/api/sync/clear",
+     *     summary="Clear sync data",
+     *     tags={"Sync"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="device_id", type="string"),
+     *             @OA\Property(property="clear_conflicts", type="boolean", default=true),
+     *             @OA\Property(property="clear_history", type="boolean", default=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Sync data cleared successfully")
+     *         )
+     *     )
+     * )
      */
     public function clearSyncData(Request $request): JsonResponse
     {

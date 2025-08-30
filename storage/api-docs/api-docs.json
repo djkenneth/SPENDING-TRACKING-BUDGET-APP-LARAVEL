@@ -5035,6 +5035,528 @@
                 ]
             }
         },
+        "/api/currencies": {
+            "get": {
+                "tags": [
+                    "Currency"
+                ],
+                "summary": "Get list of supported currencies",
+                "description": "Get list of supported currencies",
+                "operationId": "23e8cf721bca47bcc3bb8bfb6a3b39d9",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "USD"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "US Dollar"
+                                                    },
+                                                    "symbol": {
+                                                        "type": "string",
+                                                        "example": "$"
+                                                    },
+                                                    "decimal_places": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "is_default": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 10
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to fetch currencies"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/exchange-rates": {
+            "get": {
+                "tags": [
+                    "Exchange Rates"
+                ],
+                "summary": "Get current exchange rates",
+                "description": "Get current exchange rates",
+                "operationId": "32c9ca56ee85c2a30d28a34f7d2e0ce5",
+                "parameters": [
+                    {
+                        "name": "base_currency",
+                        "in": "query",
+                        "description": "Base currency code",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 3,
+                            "minLength": 3
+                        }
+                    },
+                    {
+                        "name": "target_currencies[]",
+                        "in": "query",
+                        "description": "Target currency codes",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Date for exchange rates",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "base_currency": {
+                                                    "type": "string",
+                                                    "example": "USD"
+                                                },
+                                                "date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-01-15"
+                                                },
+                                                "rates": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "EUR": 0.855,
+                                                        "GBP": 0.73,
+                                                        "JPY": 110.25
+                                                    }
+                                                },
+                                                "last_updated": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/exchange-rates/refresh": {
+            "post": {
+                "tags": [
+                    "Exchange Rates"
+                ],
+                "summary": "Refresh exchange rates from external API",
+                "description": "Refresh exchange rates from external API",
+                "operationId": "0e65539b918b32de189ad3dbb8bc806b",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "currencies": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "force": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Exchange rates refreshed successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "updated_count": {
+                                                    "type": "integer"
+                                                },
+                                                "rates": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "provider": {
+                                                    "type": "string"
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/exchange-rates/history": {
+            "get": {
+                "tags": [
+                    "Exchange Rates"
+                ],
+                "summary": "Get exchange rate history for a currency pair",
+                "description": "Get exchange rate history for a currency pair",
+                "operationId": "c5eb35486c2d462bfebc22a58806e540",
+                "parameters": [
+                    {
+                        "name": "from_currency",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 3,
+                            "minLength": 3
+                        }
+                    },
+                    {
+                        "name": "to_currency",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 3,
+                            "minLength": 3
+                        }
+                    },
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Number of days of history (1-365)",
+                        "schema": {
+                            "type": "integer",
+                            "default": 30,
+                            "maximum": 365,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "from_currency": {
+                                                    "type": "string"
+                                                },
+                                                "to_currency": {
+                                                    "type": "string"
+                                                },
+                                                "period": {
+                                                    "properties": {
+                                                        "start_date": {
+                                                            "type": "string",
+                                                            "format": "date"
+                                                        },
+                                                        "end_date": {
+                                                            "type": "string",
+                                                            "format": "date"
+                                                        },
+                                                        "days": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "history": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            },
+                                                            "rate": {
+                                                                "type": "number"
+                                                            },
+                                                            "source": {
+                                                                "type": "string"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "statistics": {
+                                                    "properties": {
+                                                        "min": {
+                                                            "type": "number"
+                                                        },
+                                                        "max": {
+                                                            "type": "number"
+                                                        },
+                                                        "average": {
+                                                            "type": "number"
+                                                        },
+                                                        "change": {
+                                                            "type": "number"
+                                                        },
+                                                        "change_percentage": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/currencies/convert": {
+            "post": {
+                "tags": [
+                    "Currency"
+                ],
+                "summary": "Convert amount between currencies",
+                "description": "Convert amount between currencies",
+                "operationId": "35f3d7bc6a4975c177ecac5a97a45e4e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount",
+                                    "from_currency",
+                                    "to_currency"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 100
+                                    },
+                                    "from_currency": {
+                                        "type": "string",
+                                        "maxLength": 3,
+                                        "minLength": 3,
+                                        "example": "USD"
+                                    },
+                                    "to_currency": {
+                                        "type": "string",
+                                        "maxLength": 3,
+                                        "minLength": 3,
+                                        "example": "EUR"
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-15"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "original": {
+                                                    "properties": {
+                                                        "amount": {
+                                                            "type": "number",
+                                                            "example": 100
+                                                        },
+                                                        "currency": {
+                                                            "type": "string",
+                                                            "example": "USD"
+                                                        },
+                                                        "formatted": {
+                                                            "type": "string",
+                                                            "example": "$ 100.00"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "converted": {
+                                                    "properties": {
+                                                        "amount": {
+                                                            "type": "number",
+                                                            "example": 85.5
+                                                        },
+                                                        "currency": {
+                                                            "type": "string",
+                                                            "example": "EUR"
+                                                        },
+                                                        "formatted": {
+                                                            "type": "string",
+                                                            "example": "€ 85.50"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "rate": {
+                                                    "type": "number",
+                                                    "example": 0.855
+                                                },
+                                                "date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-01-15"
+                                                },
+                                                "calculation": {
+                                                    "type": "string",
+                                                    "example": "100 × 0.855 = 85.5"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
         "/api/debts": {
             "get": {
                 "tags": [
@@ -7025,6 +7547,1226 @@
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/settings": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get all user settings",
+                "description": "Get all user settings",
+                "operationId": "42d0b4246b20863060a17026148f8d92",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "example": {
+                                                "theme": "dark",
+                                                "notifications_enabled": true,
+                                                "currency": "USD",
+                                                "timezone": "America/New_York",
+                                                "language": "en"
+                                            },
+                                            "additionalProperties": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update user settings",
+                "description": "Update user settings",
+                "operationId": "bab68a274d7f57c745266a611e7e13ed",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "settings"
+                                ],
+                                "properties": {
+                                    "settings": {
+                                        "type": "object",
+                                        "additionalProperties": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Settings updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/settings/preferences": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get user preferences",
+                "description": "Get user preferences",
+                "operationId": "6ac86ed82fe13437a38e23c794524440",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "example": {
+                                                "theme": "auto",
+                                                "date_format": "DD/MM/YYYY",
+                                                "number_format": "1,000.00",
+                                                "start_of_week": 1,
+                                                "budget_period": "monthly",
+                                                "show_account_balance": true,
+                                                "show_category_icons": true,
+                                                "enable_sound": true,
+                                                "auto_backup": false,
+                                                "default_account_id": null,
+                                                "default_category_id": null
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update user preferences",
+                "description": "Update user preferences",
+                "operationId": "013797a072f3188d7ea648c8cfa72bd4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "preferences": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/settings/backup": {
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Create data backup",
+                "description": "Create data backup",
+                "operationId": "310d5f76a401206d8bc20e950c0491fb",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "include_attachments": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "password": {
+                                        "description": "Optional password for encryption",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Backup created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "filename": {
+                                                    "type": "string"
+                                                },
+                                                "size": {
+                                                    "type": "integer"
+                                                },
+                                                "download_url": {
+                                                    "type": "string"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/settings/restore": {
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Restore from backup",
+                "description": "Restore from backup",
+                "operationId": "bb3644fb5e9ca07e085a9491d46bbd77",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "backup_file"
+                                ],
+                                "properties": {
+                                    "backup_file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "overwrite": {
+                                        "type": "boolean",
+                                        "default": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Backup restored successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "restored_items": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/settings/export": {
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Export user data",
+                "description": "Export user data",
+                "operationId": "3f2fcea3da5a0640a19d5f08f01446a1",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "format": {
+                                        "type": "string",
+                                        "default": "json",
+                                        "enum": [
+                                            "json",
+                                            "csv",
+                                            "xlsx"
+                                        ]
+                                    },
+                                    "data_types": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "transactions",
+                                                "accounts",
+                                                "budgets",
+                                                "categories",
+                                                "goals"
+                                            ]
+                                        }
+                                    },
+                                    "date_from": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "date_to": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "download_url": {
+                                                    "type": "string"
+                                                },
+                                                "filename": {
+                                                    "type": "string"
+                                                },
+                                                "size": {
+                                                    "type": "integer"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/settings/import": {
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Import user data",
+                "description": "Import user data",
+                "operationId": "5fbd21672ef9295418803a096496bdf7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "import_file"
+                                ],
+                                "properties": {
+                                    "import_file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "enum": [
+                                            "json",
+                                            "csv",
+                                            "xlsx"
+                                        ]
+                                    },
+                                    "data_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "transactions",
+                                            "accounts",
+                                            "budgets",
+                                            "categories"
+                                        ]
+                                    },
+                                    "duplicate_action": {
+                                        "type": "string",
+                                        "default": "skip",
+                                        "enum": [
+                                            "skip",
+                                            "update",
+                                            "create"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "imported": {
+                                                    "type": "integer"
+                                                },
+                                                "skipped": {
+                                                    "type": "integer"
+                                                },
+                                                "errors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/settings/notifications": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get notification settings",
+                "description": "Get notification settings",
+                "operationId": "403ad4068eb541e20f73006845219429",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "email_notifications": {
+                                                    "type": "boolean"
+                                                },
+                                                "push_notifications": {
+                                                    "type": "boolean"
+                                                },
+                                                "budget_alerts": {
+                                                    "type": "boolean"
+                                                },
+                                                "transaction_alerts": {
+                                                    "type": "boolean"
+                                                },
+                                                "bill_reminders": {
+                                                    "type": "boolean"
+                                                },
+                                                "goal_updates": {
+                                                    "type": "boolean"
+                                                },
+                                                "weekly_summary": {
+                                                    "type": "boolean"
+                                                },
+                                                "monthly_report": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update notification settings",
+                "description": "Update notification settings",
+                "operationId": "5b0ef550f2a47f9d8044b1f3d0bf5ad7",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email_notifications": {
+                                        "type": "boolean"
+                                    },
+                                    "push_notifications": {
+                                        "type": "boolean"
+                                    },
+                                    "budget_alerts": {
+                                        "type": "boolean"
+                                    },
+                                    "transaction_alerts": {
+                                        "type": "boolean"
+                                    },
+                                    "bill_reminders": {
+                                        "type": "boolean"
+                                    },
+                                    "goal_updates": {
+                                        "type": "boolean"
+                                    },
+                                    "weekly_summary": {
+                                        "type": "boolean"
+                                    },
+                                    "monthly_report": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sync/status": {
+            "get": {
+                "tags": [
+                    "Sync"
+                ],
+                "summary": "Get sync status",
+                "description": "Get sync status for the user",
+                "operationId": "8fc30bd90dc431da8de9d85070ca9269",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "last_sync": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "pending_changes": {
+                                                    "type": "integer"
+                                                },
+                                                "sync_enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "sync_frequency": {
+                                                    "type": "string",
+                                                    "example": "auto"
+                                                },
+                                                "conflicts": {
+                                                    "type": "integer"
+                                                },
+                                                "devices": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "device_id": {
+                                                                "type": "string"
+                                                            },
+                                                            "device_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "last_sync": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "synced",
+                                                                    "pending",
+                                                                    "error"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sync/transactions": {
+            "post": {
+                "tags": [
+                    "Sync"
+                ],
+                "summary": "Sync offline transactions",
+                "description": "Sync offline transactions",
+                "operationId": "ed5cf58160d30d0493eb1ea0a9a2098e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "transactions",
+                                    "device_id",
+                                    "last_sync"
+                                ],
+                                "properties": {
+                                    "transactions": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "local_id": {
+                                                    "type": "string"
+                                                },
+                                                "server_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "action": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "create",
+                                                        "update",
+                                                        "delete"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "last_sync": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transactions synced successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "synced": {
+                                                    "type": "integer"
+                                                },
+                                                "conflicts": {
+                                                    "type": "integer"
+                                                },
+                                                "errors": {
+                                                    "type": "integer"
+                                                },
+                                                "mapping": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "local_id": {
+                                                                "type": "string"
+                                                            },
+                                                            "server_id": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "server_changes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sync/full": {
+            "post": {
+                "tags": [
+                    "Sync"
+                ],
+                "summary": "Full data sync",
+                "description": "Perform full data sync",
+                "operationId": "dfad4be82ed6105ce1a49b708d37fc8c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "device_id"
+                                ],
+                                "properties": {
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "last_sync": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "force": {
+                                        "type": "boolean",
+                                        "default": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Full sync completed successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "synced_entities": {
+                                                    "properties": {
+                                                        "transactions": {
+                                                            "type": "integer"
+                                                        },
+                                                        "accounts": {
+                                                            "type": "integer"
+                                                        },
+                                                        "categories": {
+                                                            "type": "integer"
+                                                        },
+                                                        "budgets": {
+                                                            "type": "integer"
+                                                        },
+                                                        "goals": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "conflicts_resolved": {
+                                                    "type": "integer"
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sync/conflicts": {
+            "get": {
+                "tags": [
+                    "Sync"
+                ],
+                "summary": "Get sync conflicts",
+                "description": "Get sync conflicts",
+                "operationId": "2d75dabe0b5f47bd3da97774086a45df",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "entity_type": {
+                                                        "type": "string",
+                                                        "example": "transaction"
+                                                    },
+                                                    "entity_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "local_data": {
+                                                        "type": "object"
+                                                    },
+                                                    "server_data": {
+                                                        "type": "object"
+                                                    },
+                                                    "conflict_type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "update",
+                                                            "delete"
+                                                        ]
+                                                    },
+                                                    "detected_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sync/resolve-conflicts": {
+            "post": {
+                "tags": [
+                    "Sync"
+                ],
+                "summary": "Resolve sync conflicts",
+                "description": "Resolve sync conflicts",
+                "operationId": "fd729860fca8cdd9bb025f58b23df0cf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "resolutions"
+                                ],
+                                "properties": {
+                                    "resolutions": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "conflict_id": {
+                                                    "type": "integer"
+                                                },
+                                                "resolution": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "keep_local",
+                                                        "keep_server",
+                                                        "merge"
+                                                    ]
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Conflicts resolved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "resolved": {
+                                                    "type": "integer"
+                                                },
+                                                "failed": {
+                                                    "type": "integer"
+                                                },
+                                                "errors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sync/last-sync": {
+            "get": {
+                "tags": [
+                    "Sync"
+                ],
+                "summary": "Get last sync timestamp",
+                "description": "Get last sync timestamp",
+                "operationId": "23ab6ceecda3a6b21afb827332ec087d",
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "last_sync": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "device_id": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "sync_count": {
+                                                    "type": "integer"
+                                                },
+                                                "next_sync": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sync/clear": {
+            "delete": {
+                "tags": [
+                    "Sync"
+                ],
+                "summary": "Clear sync data",
+                "description": "Clear sync data and reset sync state",
+                "operationId": "e2e3f41f37e8939834b051b897571f5c",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "clear_conflicts": {
+                                        "type": "boolean",
+                                        "default": true
+                                    },
+                                    "clear_history": {
+                                        "type": "boolean",
+                                        "default": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Sync data cleared successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -14321,12 +16063,28 @@
             "description": "Analytics and reporting endpoints"
         },
         {
+            "name": "Currency",
+            "description": "Currency"
+        },
+        {
+            "name": "Exchange Rates",
+            "description": "Exchange Rates"
+        },
+        {
             "name": "Financial Goals",
             "description": "Financial Goals"
         },
         {
             "name": "System",
             "description": "System"
+        },
+        {
+            "name": "Settings",
+            "description": "Settings"
+        },
+        {
+            "name": "Sync",
+            "description": "Sync"
         }
     ]
 }
