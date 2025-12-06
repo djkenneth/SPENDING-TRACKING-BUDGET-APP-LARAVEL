@@ -38,15 +38,6 @@ class DefaultAccountSeeder extends Seeder
                 'description' => 'Cash and petty cash',
             ],
             [
-                'name' => 'Main Checking',
-                'type' => 'bank',
-                'balance' => 0.00,
-                'currency' => $user->currency,
-                'color' => '#2196F3',
-                'icon' => 'account_balance',
-                'description' => 'Primary checking account',
-            ],
-            [
                 'name' => 'Savings',
                 'type' => 'bank',
                 'balance' => 0.00,
