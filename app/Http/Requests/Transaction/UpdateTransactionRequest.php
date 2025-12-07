@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Transaction;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateTransactionRequest extends FormRequest
 {
@@ -88,7 +89,7 @@ class UpdateTransactionRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $user = auth()->user();
+            $user = Auth::user();
             $transaction = $this->route('transaction');
 
             // Validate that account belongs to user
