@@ -123,13 +123,6 @@ Route::middleware('auth:sanctum')->prefix('accounts')->group(function () {
 */
 
 Route::middleware('auth:sanctum')->prefix('transactions')->group(function () {
-    // Basic CRUD Operations
-    Route::get('/', [TransactionController::class, 'index']); // GET /api/transactions
-    Route::post('/', [TransactionController::class, 'store']); // POST /api/transactions
-    Route::get('/{transaction}', [TransactionController::class, 'show']); // GET /api/transactions/{id}
-    Route::match(['put', 'patch'], '/{transaction}', [TransactionController::class, 'updateTransaction']); // PUT /api/transactions/{id}
-    Route::delete('/{transaction}', [TransactionController::class, 'destroy']); // DELETE /api/transactions/{id}
-
     // Bulk Operations
     Route::post('/bulk', [TransactionController::class, 'bulkCreate']); // POST /api/transactions/bulk
     Route::delete('/bulk', [TransactionController::class, 'bulkDelete']); // DELETE /api/transactions/bulk
@@ -144,6 +137,13 @@ Route::middleware('auth:sanctum')->prefix('transactions')->group(function () {
 
     // Statistics and Analytics
     Route::get('/statistics/summary', [TransactionController::class, 'statistics']); // GET /api/transactions/statistics/summary
+
+    // Basic CRUD Operations
+    Route::get('/', [TransactionController::class, 'index']); // GET /api/transactions
+    Route::post('/', [TransactionController::class, 'store']); // POST /api/transactions
+    Route::get('/{transaction}', [TransactionController::class, 'show']); // GET /api/transactions/{id}
+    Route::match(['put', 'patch'], '/{transaction}', [TransactionController::class, 'update']); // PUT /api/transactions/{id}
+    Route::delete('/{transaction}', [TransactionController::class, 'destroy']); // DELETE /api/transactions/{id}
 });
 
 /*

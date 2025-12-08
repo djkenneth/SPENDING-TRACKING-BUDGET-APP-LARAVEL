@@ -241,7 +241,7 @@ class TransactionController extends Controller
      *     @OA\Response(response=422, description="Validation Error")
      * )
      */
-    public function updateTransaction(UpdateTransactionRequest $request, Transaction $transaction): JsonResponse
+    public function update(UpdateTransactionRequest $request, Transaction $transaction): JsonResponse
     {
         return response()->json([
             'success' => true,
