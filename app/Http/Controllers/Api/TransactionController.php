@@ -243,39 +243,35 @@ class TransactionController extends Controller
      */
     public function update(UpdateTransactionRequest $request, Transaction $transaction): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => $transaction
-        ]);
 
         // Ensure transaction belongs to authenticated user
-        // if ($transaction->user_id !== $request->user()->id) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Transaction not found'
-        //     ], 404);
-        // }
+        if ($transaction->user_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction not found'
+            ], 404);
+        }
 
-        // try {
-        //     DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
-        //     $updatedTransaction = $this->transactionService->updateTransaction($transaction, $request->validated());
+            $updatedTransaction = $this->transactionService->updateTransaction($transaction, $request->validated());
 
-        //     DB::commit();
+            DB::commit();
 
-        //     return response()->json([
-        //         'success' => true,
-        //         'message' => 'Transaction updated successfully',
-        //         'data' => new TransactionResource($updatedTransaction->load(['account', 'category', 'transferAccount']))
-        //     ]);
-        // } catch (\Exception $e) {
-        //     DB::rollBack();
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction updated successfully',
+                'data' => new TransactionResource($updatedTransaction->load(['account', 'category', 'transferAccount']))
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
 
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Transaction update failed: ' . $e->getMessage()
-        //     ], 500);
-        // }
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction update failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

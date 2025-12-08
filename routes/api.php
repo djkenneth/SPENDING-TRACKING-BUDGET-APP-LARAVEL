@@ -142,7 +142,8 @@ Route::middleware('auth:sanctum')->prefix('transactions')->group(function () {
     Route::get('/', [TransactionController::class, 'index']); // GET /api/transactions
     Route::post('/', [TransactionController::class, 'store']); // POST /api/transactions
     Route::get('/{transaction}', [TransactionController::class, 'show']); // GET /api/transactions/{id}
-    Route::match(['put', 'patch'], '/{transaction}', [TransactionController::class, 'update']); // PUT /api/transactions/{id}
+    Route::put('/{transaction}', [TransactionController::class, 'update']); // PUT /api/transactions/{id}
+    Route::patch('/{transaction}', [TransactionController::class, 'update']); // PATCH /api/transactions/{id}
     Route::delete('/{transaction}', [TransactionController::class, 'destroy']); // DELETE /api/transactions/{id}
 });
 
