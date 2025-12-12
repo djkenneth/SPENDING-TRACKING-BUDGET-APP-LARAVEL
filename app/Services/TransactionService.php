@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class TransactionService
 {
@@ -20,7 +21,7 @@ class TransactionService
      */
     public function createTransaction(array $data): Transaction
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         // Handle file attachments
         if (isset($data['attachments'])) {

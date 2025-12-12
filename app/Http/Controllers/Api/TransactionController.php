@@ -78,7 +78,9 @@ class TransactionController extends Controller
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'type' => ['nullable', 'string', 'in:income,expense,transfer'],
             'start_date' => ['nullable', 'date'],
+            'date_from' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'date_to' => ['nullable', 'date'],
             'min_amount' => ['nullable', 'numeric', 'min:0'],
             'max_amount' => ['nullable', 'numeric', 'min:0'],
             'search' => ['nullable', 'string', 'max:255'],
@@ -761,12 +763,15 @@ class TransactionController extends Controller
             $query->where('type', $request->type);
         }
 
-        if ($request->filled('start_date')) {
-            $query->where('date', '>=', $request->start_date);
+        if ($request->filled('start_date') || $request->filled('date_from')) {
+            $startDate = $request->input('start_date') ?? $request->input('date_from');
+            $query->where('date', '>=', $startDate);
         }
 
-        if ($request->filled('end_date')) {
-            $query->where('date', '<=', $request->end_date);
+        // Support both end_date and date_to (backwards compatibility)
+        if ($request->filled('end_date') || $request->filled('date_to')) {
+            $endDate = $request->input('end_date') ?? $request->input('date_to');
+            $query->where('date', '<=', $endDate);
         }
 
         if ($request->filled('min_amount')) {
