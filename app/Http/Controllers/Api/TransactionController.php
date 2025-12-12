@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -33,7 +34,7 @@ class TransactionController extends Controller
      *     operationId="getTransactions",
      *     tags={"Transactions"},
      *     summary="Get all user transactions with filtering and pagination",
-     *     security={{"bearerAuth":{}}},
+     *     security={{"sanctum":{}}},
      *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", minimum=1)),
      *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", minimum=1, maximum=100)),
      *     @OA\Parameter(name="account_id", in="query", required=false, @OA\Schema(type="integer")),
@@ -71,57 +72,91 @@ class TransactionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $request->validate([
-            'page' => ['nullable', 'integer', 'min:1'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'account_id' => ['nullable', 'integer', 'exists:accounts,id'],
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'type' => ['nullable', 'string', 'in:income,expense,transfer'],
-            'start_date' => ['nullable', 'date'],
-            'date_from' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'date_to' => ['nullable', 'date'],
-            'min_amount' => ['nullable', 'numeric', 'min:0'],
-            'max_amount' => ['nullable', 'numeric', 'min:0'],
-            'search' => ['nullable', 'string', 'max:255'],
-            'tags' => ['nullable', 'array'],
-            'tags.*' => ['string', 'max:50'],
-            'is_cleared' => ['nullable', 'boolean'],
-            'is_recurring' => ['nullable', 'boolean'],
-            'sort_by' => ['nullable', 'string', 'in:date,amount,description,created_at'],
-            'sort_direction' => ['nullable', 'string', 'in:asc,desc'],
-        ]);
+        try {
+            // ✅ Validate authenticated user exists
+            $user = $request->user();
 
-        $query = $request->user()->transactions()->with(['account', 'category', 'transferAccount']);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated - No user found'
+                ], 401);
+            }
 
-        // Apply filters
-        $this->applyTransactionFilters($query, $request);
+            // ✅ Validate request parameters
+            $validated = $request->validate([
+                'page' => ['nullable', 'integer', 'min:1'],
+                'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+                'account_id' => ['nullable', 'integer', 'exists:accounts,id'],
+                'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+                'type' => ['nullable', 'string', 'in:income,expense,transfer'],
+                'start_date' => ['nullable', 'date'],
+                'date_from' => ['nullable', 'date'], // Backwards compatibility
+                'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+                'date_to' => ['nullable', 'date'], // Backwards compatibility
+                'min_amount' => ['nullable', 'numeric', 'min:0'],
+                'max_amount' => ['nullable', 'numeric', 'min:0'],
+                'search' => ['nullable', 'string', 'max:255'],
+                'tags' => ['nullable', 'array'],
+                'tags.*' => ['string', 'max:50'],
+                'is_cleared' => ['nullable', 'boolean'],
+                'is_recurring' => ['nullable', 'boolean'],
+                'sort_by' => ['nullable', 'string', 'in:date,amount,description,created_at'],
+                'sort_direction' => ['nullable', 'string', 'in:asc,desc'],
+            ]);
 
-        // Apply sorting
-        $sortBy = $request->input('sort_by', 'date');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+            // ✅ Build query with proper relationships
+            $query = $user->transactions()
+                ->with(['account', 'category', 'transferAccount']);
 
-        $perPage = $request->input('per_page', 20);
-        $transactions = $query->paginate($perPage);
+            // ✅ Apply filters
+            $this->applyTransactionFilters($query, $request);
 
-        // Calculate summary statistics
-        $summaryQuery = clone $query;
-        $summaryStats = $this->calculateTransactionSummary($summaryQuery);
+            // ✅ Apply sorting
+            $sortBy = $request->input('sort_by', 'date');
+            $sortDirection = $request->input('sort_direction', 'desc');
+            $query->orderBy($sortBy, $sortDirection);
 
-        return response()->json([
-            'success' => true,
-            'data' => TransactionResource::collection($transactions->items()),
-            'meta' => [
-                'current_page' => $transactions->currentPage(),
-                'last_page' => $transactions->lastPage(),
-                'per_page' => $transactions->perPage(),
-                'total' => $transactions->total(),
-                'from' => $transactions->firstItem(),
-                'to' => $transactions->lastItem(),
-                'summary' => $summaryStats,
-            ]
-        ]);
+            // ✅ Paginate results
+            $perPage = $request->input('per_page', 20);
+            $transactions = $query->paginate($perPage);
+
+            // ✅ Calculate summary statistics
+            $summaryStats = $this->calculateTransactionSummary($user->id, $request);
+
+            return response()->json([
+                'success' => true,
+                'data' => TransactionResource::collection($transactions->items()),
+                'meta' => [
+                    'current_page' => $transactions->currentPage(),
+                    'last_page' => $transactions->lastPage(),
+                    'per_page' => $transactions->perPage(),
+                    'total' => $transactions->total(),
+                    'from' => $transactions->firstItem(),
+                    'to' => $transactions->lastItem(),
+                    'summary' => $summaryStats,
+                ],
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Transaction index error: ' . $e->getMessage(), [
+                'user_id' => $request->user()?->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch transactions',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
     }
 
     /**
@@ -748,6 +783,7 @@ class TransactionController extends Controller
      */
     private function applyTransactionFilters($query, Request $request): void
     {
+        // Account filter - matches both account_id and transfer_account_id
         if ($request->filled('account_id')) {
             $query->where(function ($q) use ($request) {
                 $q->where('account_id', $request->account_id)
@@ -755,25 +791,28 @@ class TransactionController extends Controller
             });
         }
 
+        // Category filter
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
+        // Type filter
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
 
+        // Date range filters - support both start_date and date_from
         if ($request->filled('start_date') || $request->filled('date_from')) {
             $startDate = $request->input('start_date') ?? $request->input('date_from');
             $query->where('date', '>=', $startDate);
         }
 
-        // Support both end_date and date_to (backwards compatibility)
         if ($request->filled('end_date') || $request->filled('date_to')) {
             $endDate = $request->input('end_date') ?? $request->input('date_to');
             $query->where('date', '<=', $endDate);
         }
 
+        // Amount range filters
         if ($request->filled('min_amount')) {
             $query->where('amount', '>=', $request->min_amount);
         }
@@ -782,6 +821,7 @@ class TransactionController extends Controller
             $query->where('amount', '<=', $request->max_amount);
         }
 
+        // Search filter
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -791,6 +831,7 @@ class TransactionController extends Controller
             });
         }
 
+        // Tags filter
         if ($request->filled('tags')) {
             $tags = $request->tags;
             $query->where(function ($q) use ($tags) {
@@ -800,6 +841,7 @@ class TransactionController extends Controller
             });
         }
 
+        // Boolean filters
         if ($request->has('is_cleared')) {
             $query->where('is_cleared', $request->boolean('is_cleared'));
         }
@@ -812,11 +854,13 @@ class TransactionController extends Controller
     /**
      * Calculate transaction summary statistics
      */
-    private function calculateTransactionSummary($query): array
+    private function calculateTransactionSummary(int $userId, Request $request): array
     {
-        // Clone the query to avoid affecting pagination
-        $statsQuery = clone $query;
-        $transactions = $statsQuery->get();
+        // Build a fresh query for summary stats with same filters
+        $query = Transaction::where('user_id', $userId);
+        $this->applyTransactionFilters($query, $request);
+
+        $transactions = $query->get();
 
         $income = $transactions->where('type', 'income')->sum('amount');
         $expenses = $transactions->where('type', 'expense')->sum('amount');
@@ -828,7 +872,9 @@ class TransactionController extends Controller
             'total_expenses' => $expenses,
             'total_transfers' => $transfers,
             'net_amount' => $income - $expenses,
-            'average_transaction' => $transactions->count() > 0 ? $transactions->avg('amount') : 0,
+            'average_transaction' => $transactions->count() > 0
+                ? $transactions->avg('amount')
+                : 0,
             'transactions_by_type' => [
                 'income' => $transactions->where('type', 'income')->count(),
                 'expense' => $transactions->where('type', 'expense')->count(),
