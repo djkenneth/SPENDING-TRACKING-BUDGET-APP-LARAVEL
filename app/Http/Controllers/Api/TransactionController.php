@@ -83,6 +83,19 @@ class TransactionController extends Controller
                 ], 401);
             }
 
+            // ✅ Convert boolean strings to integers before validation
+            if ($request->has('is_recurring')) {
+                $request->merge([
+                    'is_recurring' => filter_var($request->input('is_recurring'), FILTER_VALIDATE_BOOLEAN) ? 1 : 0
+                ]);
+            }
+
+            if ($request->has('is_cleared')) {
+                $request->merge([
+                    'is_cleared' => filter_var($request->input('is_cleared'), FILTER_VALIDATE_BOOLEAN) ? 1 : 0
+                ]);
+            }
+
             // ✅ Validate request parameters
             $validated = $request->validate([
                 'page' => ['nullable', 'integer', 'min:1'],
