@@ -2008,17 +2008,17 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "user1@sample.com"
+                                        "example": "user@example.com"
                                     },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "!Admin123"
+                                        "example": "password123"
                                     },
                                     "password_confirmation": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "!Admin123"
+                                        "example": "password123"
                                     },
                                     "currency": {
                                         "description": "Default currency",
@@ -2126,12 +2126,12 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "user@example.com"
+                                        "example": "user1@sample.com"
                                     },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "password123"
+                                        "example": "!Admin123"
                                     },
                                     "remember": {
                                         "description": "Remember me",
