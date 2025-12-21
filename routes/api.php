@@ -154,6 +154,13 @@ Route::middleware('auth:sanctum')->prefix('transactions')->group(function () {
 */
 
 Route::middleware('auth:sanctum')->prefix('categories')->group(function () {
+    // Basic CRUD Operations
+    Route::get('/', [CategoryController::class, 'index']); // GET /api/categories
+    Route::post('/', [CategoryController::class, 'store']); // POST /api/categories
+    Route::get('/{category}', [CategoryController::class, 'show']); // GET /api/categories/{id}
+    Route::put('/{category}', [CategoryController::class, 'update']); // PUT /api/categories/{id}
+    Route::delete('/{category}', [CategoryController::class, 'destroy']); // DELETE /api/categories/{id}
+
     // Analytics and Reports
     Route::get('/analytics/spending-analysis', [CategoryController::class, 'spendingAnalysis']); // GET /api/categories/analytics/spending-analysis
     Route::get('/analytics/trends', [CategoryController::class, 'trends']); // GET /api/categories/analytics/trends
@@ -169,13 +176,6 @@ Route::middleware('auth:sanctum')->prefix('categories')->group(function () {
     Route::put('/bulk/reorder', [CategoryController::class, 'reorder']); // PUT /api/categories/bulk/reorder
     // Category Management
     Route::post('/merge', [CategoryController::class, 'merge']); // POST /api/categories/merge
-
-    // Basic CRUD Operations
-    Route::get('/', [CategoryController::class, 'index']); // GET /api/categories
-    Route::post('/', [CategoryController::class, 'store']); // POST /api/categories
-    Route::get('/{category}', [CategoryController::class, 'show']); // GET /api/categories/{id}
-    Route::put('/{category}', [CategoryController::class, 'update']); // PUT /api/categories/{id}
-    Route::delete('/{category}', [CategoryController::class, 'destroy']); // DELETE /api/categories/{id}
 
     // Category Transactions
     Route::get('/{category}/transactions', [CategoryController::class, 'transactions']); // GET /api/categories/{id}/transactions
