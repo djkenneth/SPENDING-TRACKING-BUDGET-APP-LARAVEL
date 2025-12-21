@@ -4,6 +4,7 @@ namespace App\Http\Requests\Budget;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class CreateBudgetRequest extends FormRequest
 {
@@ -90,7 +91,7 @@ class CreateBudgetRequest extends FormRequest
         $validator->after(function ($validator) {
             // Check for overlapping budgets for the same category
             if (!$validator->errors()->has('category_id') && !$validator->errors()->has('start_date') && !$validator->errors()->has('end_date')) {
-                $overlappingBudget = auth()->user()->budgets()
+                $overlappingBudget = Auth::user()->budgets()
                     ->where('category_id', $this->category_id)
                     ->where('is_active', true)
                     ->where(function ($query) {

@@ -444,4 +444,152 @@ class BudgetService
             ];
         })->values()->toArray();
     }
+
+    /**
+     * Calculate total spending for a user within a given date range
+     *
+     * This method calculates the sum of all expense transactions for a user
+     * within the specified date range, regardless of budget category.
+     *
+     * @param User $user The user to calculate spending for
+     * @param Carbon|string $startDate Start of the period
+     * @param Carbon|string $endDate End of the period
+     * @param array|null $categoryIds Optional array of category IDs to filter by
+     * @return float Total spending amount
+     */
+    public function calculatePeriodSpending(User $user, $startDate, $endDate, ?array $categoryIds = null): float
+    {
+        $query = Transaction::where('user_id', $user->id)
+            ->where('type', 'expense')
+            ->whereBetween('date', [
+                $startDate instanceof Carbon ? $startDate->format('Y-m-d') : $startDate,
+                $endDate instanceof Carbon ? $endDate->format('Y-m-d') : $endDate,
+            ]);
+
+        // Optionally filter by specific categories
+        if ($categoryIds !== null && count($categoryIds) > 0) {
+            $query->whereIn('category_id', $categoryIds);
+        }
+
+        return (float) $query->sum('amount');
+    }
+
+    /**
+     * Calculate spending for budgeted categories only within a period
+     *
+     * @param User $user The user to calculate spending for
+     * @param Carbon|string $startDate Start of the period
+     * @param Carbon|string $endDate End of the period
+     * @param string|null $budgetPeriod Filter by budget period type (monthly, quarterly, yearly)
+     * @return float Total spending for budgeted categories
+     */
+    public function calculateBudgetedSpending(User $user, $startDate, $endDate, ?string $budgetPeriod = null): float
+    {
+        // Get all active budget category IDs for the user
+        $query = $user->budgets()->where('is_active', true);
+
+        if ($budgetPeriod) {
+            $query->where('period', $budgetPeriod);
+        }
+
+        $budgetCategoryIds = $query->pluck('category_id')->filter()->toArray();
+
+        if (empty($budgetCategoryIds)) {
+            return 0.0;
+        }
+
+        return $this->calculatePeriodSpending($user, $startDate, $endDate, $budgetCategoryIds);
+    }
+
+    /**
+     * Get spending breakdown by category for a period
+     *
+     * @param User $user The user to get breakdown for
+     * @param Carbon|string $startDate Start of the period
+     * @param Carbon|string $endDate End of the period
+     * @return array Array of category spending data
+     */
+    public function getSpendingBreakdownByCategory(User $user, $startDate, $endDate): array
+    {
+        $startDateFormatted = $startDate instanceof Carbon ? $startDate->format('Y-m-d') : $startDate;
+        $endDateFormatted = $endDate instanceof Carbon ? $endDate->format('Y-m-d') : $endDate;
+
+        return Transaction::where('user_id', $user->id)
+            ->where('type', 'expense')
+            ->whereBetween('date', [$startDateFormatted, $endDateFormatted])
+            ->selectRaw('category_id, SUM(amount) as total_spent, COUNT(*) as transaction_count')
+            ->groupBy('category_id')
+            ->get()
+            ->keyBy('category_id')
+            ->toArray();
+    }
+
+    /**
+     * Calculate spending velocity metrics for a period
+     *
+     * @param User $user The user to calculate velocity for
+     * @param Carbon $startDate Start of the period
+     * @param Carbon $endDate End of the period
+     * @return array Spending velocity metrics
+     */
+    public function calculateSpendingVelocity(User $user, Carbon $startDate, Carbon $endDate): array
+    {
+        $now = Carbon::now();
+        $totalDays = $startDate->diffInDays($endDate) + 1;
+        $daysPassed = $startDate->diffInDays($now) + 1;
+        $daysRemaining = max(0, $now->diffInDays($endDate));
+
+        // Get total budget for the period
+        $totalBudget = $user->budgets()
+            ->where('is_active', true)
+            ->sum('amount');
+
+        // Get spending up to current date
+        $totalSpent = $this->calculatePeriodSpending($user, $startDate, $now);
+
+        // Calculate metrics
+        $dailyAverage = $daysPassed > 0 ? $totalSpent / $daysPassed : 0;
+        $expectedDailySpend = $totalBudget / $totalDays;
+        $projectedTotal = $dailyAverage * $totalDays;
+
+        // Determine spending rate
+        $spendingRate = $expectedDailySpend > 0 ? $dailyAverage / $expectedDailySpend : 0;
+
+        return [
+            'total_budget' => $totalBudget,
+            'total_spent' => $totalSpent,
+            'daily_average' => round($dailyAverage, 2),
+            'expected_daily_spend' => round($expectedDailySpend, 2),
+            'projected_total' => round($projectedTotal, 2),
+            'days_passed' => $daysPassed,
+            'days_remaining' => $daysRemaining,
+            'total_days' => $totalDays,
+            'spending_rate' => round($spendingRate, 2),
+            'over_budget_projected' => $projectedTotal > $totalBudget,
+            'projected_overage' => max(0, $projectedTotal - $totalBudget),
+        ];
+    }
+
+    /**
+     * Get daily spending data for a period (useful for charts)
+     *
+     * @param User $user The user to get data for
+     * @param Carbon|string $startDate Start of the period
+     * @param Carbon|string $endDate End of the period
+     * @return array Daily spending data
+     */
+    public function getDailySpendingData(User $user, $startDate, $endDate): array
+    {
+        $startDateFormatted = $startDate instanceof Carbon ? $startDate->format('Y-m-d') : $startDate;
+        $endDateFormatted = $endDate instanceof Carbon ? $endDate->format('Y-m-d') : $endDate;
+
+        return Transaction::where('user_id', $user->id)
+            ->where('type', 'expense')
+            ->whereBetween('date', [$startDateFormatted, $endDateFormatted])
+            ->selectRaw('DATE(date) as date, SUM(amount) as total')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->toArray();
+    }
 }

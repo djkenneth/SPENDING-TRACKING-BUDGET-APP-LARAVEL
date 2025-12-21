@@ -8,52 +8,40 @@ use App\Http\Requests\Budget\UpdateBudgetRequest;
 use App\Http\Resources\BudgetResource;
 use App\Models\Budget;
 use App\Services\BudgetService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class BudgetController extends Controller
 {
-    protected BudgetService $budgetService;
-
-    public function __construct(BudgetService $budgetService)
-    {
-        $this->budgetService = $budgetService;
-    }
+    public function __construct(
+        protected BudgetService $budgetService
+    ) {}
 
     /**
-     * Get all user budgets with filtering
+     * Get all budgets with filtering and statistics
      *
      * @OA\Get(
      *     path="/api/budgets",
      *     operationId="getBudgets",
      *     tags={"Budgets"},
-     *     summary="Get all user budgets with filtering",
+     *     summary="Get all budgets",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="category_id", in="query", required=false, @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"weekly", "monthly", "yearly"})),
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"weekly", "monthly", "quarterly", "yearly"})),
      *     @OA\Parameter(name="is_active", in="query", required=false, @OA\Schema(type="boolean")),
-     *     @OA\Parameter(name="include_inactive", in="query", required=false, @OA\Schema(type="boolean")),
      *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="sort_by", in="query", required=false, @OA\Schema(type="string", enum={"name", "amount", "spent", "start_date", "created_at"})),
+     *     @OA\Parameter(name="include_inactive", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="sort_by", in="query", required=false, @OA\Schema(type="string")),
      *     @OA\Parameter(name="sort_direction", in="query", required=false, @OA\Schema(type="string", enum={"asc", "desc"})),
      *     @OA\Response(
      *         response=200,
-     *         description="Successful operation",
+     *         description="List of budgets",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Budget")),
-     *             @OA\Property(property="meta", type="object",
-     *                 @OA\Property(property="total", type="integer"),
-     *                 @OA\Property(property="active_count", type="integer"),
-     *                 @OA\Property(property="inactive_count", type="integer"),
-     *                 @OA\Property(property="total_budgeted", type="number"),
-     *                 @OA\Property(property="total_spent", type="number"),
-     *                 @OA\Property(property="by_period", type="object"),
-     *                 @OA\Property(property="statistics", type="object")
-     *             )
+     *             @OA\Property(property="meta", type="object")
      *         )
      *     ),
      *     @OA\Response(response=401, description="Unauthenticated")
@@ -63,12 +51,12 @@ class BudgetController extends Controller
     {
         $request->validate([
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'period' => ['nullable', 'string', 'in:weekly,monthly,yearly'],
+            'period' => ['nullable', 'string', 'in:weekly,monthly,quarterly,yearly'],
             'is_active' => ['nullable', 'boolean'],
-            'include_inactive' => ['nullable', 'boolean'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'sort_by' => ['nullable', 'string', 'in:name,amount,spent,start_date,created_at'],
+            'include_inactive' => ['nullable', 'boolean'],
+            'sort_by' => ['nullable', 'string', 'in:name,amount,start_date,end_date,spent,created_at'],
             'sort_direction' => ['nullable', 'string', 'in:asc,desc'],
         ]);
 
@@ -117,92 +105,33 @@ class BudgetController extends Controller
                 'total_budgeted' => $budgets->sum('amount'),
                 'total_spent' => $budgets->sum('spent'),
                 'by_period' => $budgets->groupBy('period')->map->count(),
-                'statistics' => $statistics,
-            ]
+            ],
+            'statistics' => $statistics,
         ]);
     }
 
     /**
-     * Create a new budget
-     *
-     * @OA\Post(
-     *     path="/api/budgets",
-     *     operationId="createBudget",
-     *     tags={"Budgets"},
-     *     summary="Create a new budget",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/CreateBudgetRequest")
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Budget created successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Budget")
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="Bad Request"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=422, description="Validation Error")
-     * )
+     * Store a newly created budget
      */
     public function store(CreateBudgetRequest $request): JsonResponse
     {
-        try {
-            DB::beginTransaction();
+        $data = $request->validated();
+        $data['user_id'] = $request->user()->id;
 
-            $budget = $this->budgetService->createBudget($request->validated());
+        $budget = Budget::create($data);
 
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Budget created successfully',
-                'data' => new BudgetResource($budget->load('category'))
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Budget creation failed: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Budget created successfully',
+            'data' => new BudgetResource($budget->load('category')),
+        ], 201);
     }
 
     /**
-     * Get specific budget with analysis
-     *
-     * @OA\Get(
-     *     path="/api/budgets/{id}",
-     *     operationId="getBudget",
-     *     tags={"Budgets"},
-     *     summary="Get specific budget with analysis",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful operation",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", allOf={
-     *                 @OA\Schema(ref="#/components/schemas/Budget"),
-     *                 @OA\Schema(
-     *                     @OA\Property(property="analysis", type="object")
-     *                 )
-     *             })
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Budget not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
+     * Display the specified budget
      */
     public function show(Request $request, Budget $budget): JsonResponse
     {
-        // Ensure budget belongs to authenticated user
         if ($budget->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
@@ -210,49 +139,17 @@ class BudgetController extends Controller
             ], 404);
         }
 
-        $budget->load('category');
-        $budgetData = new BudgetResource($budget);
-        $budgetAnalysis = $this->budgetService->getBudgetAnalysis($budget);
-
         return response()->json([
             'success' => true,
-            'data' => array_merge($budgetData->toArray($request), [
-                'analysis' => $budgetAnalysis
-            ])
+            'data' => new BudgetResource($budget->load('category')),
         ]);
     }
 
     /**
-     * Update budget
-     *
-     * @OA\Put(
-     *     path="/api/budgets/{id}",
-     *     operationId="updateBudget",
-     *     tags={"Budgets"},
-     *     summary="Update budget",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/UpdateBudgetRequest")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Budget updated successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Budget")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Budget not found"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=422, description="Validation Error")
-     * )
+     * Update the specified budget
      */
     public function update(UpdateBudgetRequest $request, Budget $budget): JsonResponse
     {
-        // Ensure budget belongs to authenticated user
         if ($budget->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
@@ -260,53 +157,20 @@ class BudgetController extends Controller
             ], 404);
         }
 
-        try {
-            DB::beginTransaction();
+        $budget->update($request->validated());
 
-            $updatedBudget = $this->budgetService->updateBudget($budget, $request->validated());
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Budget updated successfully',
-                'data' => new BudgetResource($updatedBudget->fresh('category'))
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Budget update failed: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Budget updated successfully',
+            'data' => new BudgetResource($budget->fresh()->load('category')),
+        ]);
     }
 
     /**
-     * Delete budget
-     *
-     * @OA\Delete(
-     *     path="/api/budgets/{id}",
-     *     operationId="deleteBudget",
-     *     tags={"Budgets"},
-     *     summary="Delete budget",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Budget deleted successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Budget not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
+     * Remove the specified budget
      */
     public function destroy(Request $request, Budget $budget): JsonResponse
     {
-        // Ensure budget belongs to authenticated user
         if ($budget->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
@@ -314,134 +178,517 @@ class BudgetController extends Controller
             ], 404);
         }
 
-        try {
-            DB::beginTransaction();
+        $budget->delete();
 
-            $this->budgetService->deleteBudget($budget);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Budget deleted successfully'
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Budget deletion failed: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Budget deleted successfully',
+        ]);
     }
 
     /**
-     * Get current month budgets
+     * Get current period budgets (monthly, quarterly, yearly)
      *
      * @OA\Get(
      *     path="/api/budgets/current/month",
-     *     operationId="getCurrentMonthBudgets",
+     *     operationId="getCurrentBudgets",
      *     tags={"Budgets"},
-     *     summary="Get current month budgets with spending",
+     *     summary="Get current month/quarter/year budgets",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="category_id", in="query", required=false, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Current month budgets",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Budget")),
-     *             @OA\Property(property="meta", type="object",
-     *                 @OA\Property(property="total_budgeted", type="number"),
-     *                 @OA\Property(property="total_spent", type="number"),
-     *                 @OA\Property(property="remaining", type="number"),
-     *                 @OA\Property(property="percentage_used", type="number"),
-     *                 @OA\Property(property="budgets_count", type="integer"),
-     *                 @OA\Property(property="over_budget_count", type="integer")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated")
+     *     @OA\Response(response=200, description="Current budgets data")
      * )
      */
     public function current(Request $request): JsonResponse
     {
+        $user = $request->user();
         $currentDate = Carbon::now();
-        $startOfMonth = $currentDate->copy()->startOfMonth();
-        $endOfMonth = $currentDate->copy()->endOfMonth();
 
-        $budgets = $request->user()->budgets()
-            ->with(['category'])
+        // Monthly budgets
+        $monthlyBudgets = $user->budgets()
+            ->where('period', 'monthly')
             ->where('is_active', true)
-            ->where(function ($query) use ($startOfMonth, $endOfMonth) {
-                $query->where(function ($q) use ($startOfMonth, $endOfMonth) {
-                    // Budget period overlaps with current month
-                    $q->where('start_date', '<=', $endOfMonth)
-                        ->where('end_date', '>=', $startOfMonth);
-                });
-            })
-            ->orderBy('category_id')
+            ->with('category')
             ->get();
 
-        // Calculate spending for current month
-        $budgetsWithSpending = $budgets->map(function ($budget) use ($startOfMonth, $endOfMonth) {
-            $currentSpent = $this->budgetService->calculateCurrentSpent($budget, $startOfMonth, $endOfMonth);
-            $budget->current_spent = $currentSpent;
-            return $budget;
-        });
+        // Quarterly budgets
+        $quarterlyBudgets = $user->budgets()
+            ->where('period', 'quarterly')
+            ->where('is_active', true)
+            ->with('category')
+            ->get();
 
-        $totalBudgeted = $budgets->sum('amount');
-        $totalSpent = $budgetsWithSpending->sum('current_spent');
+        // Yearly budgets
+        $yearlyBudgets = $user->budgets()
+            ->where('period', 'yearly')
+            ->where('is_active', true)
+            ->with('category')
+            ->get();
+
+        // Calculate spending for each period
+        $monthStart = $currentDate->copy()->startOfMonth();
+        $monthEnd = $currentDate->copy()->endOfMonth();
+
+        $quarterStart = $currentDate->copy()->firstOfQuarter();
+        $quarterEnd = $currentDate->copy()->lastOfQuarter();
+
+        $yearStart = $currentDate->copy()->startOfYear();
+        $yearEnd = $currentDate->copy()->endOfYear();
+
+        // Calculate monthly totals
+        $monthlyTotal = $monthlyBudgets->sum('amount');
+        $monthlySpent = $this->budgetService->calculatePeriodSpending($user, $monthStart, $monthEnd);
+
+        // Calculate quarterly totals
+        $quarterlyTotal = $quarterlyBudgets->sum('amount');
+        $quarterlySpent = $this->budgetService->calculatePeriodSpending($user, $quarterStart, $quarterEnd);
+
+        // Calculate yearly totals
+        $yearlyTotal = $yearlyBudgets->sum('amount');
+        $yearlySpent = $this->budgetService->calculatePeriodSpending($user, $yearStart, $yearEnd);
 
         return response()->json([
             'success' => true,
-            'data' => BudgetResource::collection($budgetsWithSpending),
-            'meta' => [
-                'period' => [
-                    'start_date' => $startOfMonth->toDateString(),
-                    'end_date' => $endOfMonth->toDateString(),
-                    'name' => $currentDate->format('F Y')
+            'data' => [
+                'monthly' => [
+                    'period' => $currentDate->format('F Y'),
+                    'start_date' => $monthStart->toDateString(),
+                    'end_date' => $monthEnd->toDateString(),
+                    'total_budget' => $monthlyTotal,
+                    'total_spent' => $monthlySpent,
+                    'remaining' => $monthlyTotal - $monthlySpent,
+                    'percentage_used' => $monthlyTotal > 0 ? round(($monthlySpent / $monthlyTotal) * 100, 1) : 0,
+                    'budgets' => BudgetResource::collection($monthlyBudgets),
                 ],
-                'total_budgeted' => $totalBudgeted,
+                'quarterly' => [
+                    'period' => 'Q' . $currentDate->quarter . ' ' . $currentDate->year . ' (' . $quarterStart->format('M') . ' - ' . $quarterEnd->format('M') . ')',
+                    'start_date' => $quarterStart->toDateString(),
+                    'end_date' => $quarterEnd->toDateString(),
+                    'total_budget' => $quarterlyTotal,
+                    'total_spent' => $quarterlySpent,
+                    'remaining' => $quarterlyTotal - $quarterlySpent,
+                    'percentage_used' => $quarterlyTotal > 0 ? round(($quarterlySpent / $quarterlyTotal) * 100, 1) : 0,
+                    'budgets' => BudgetResource::collection($quarterlyBudgets),
+                ],
+                'yearly' => [
+                    'period' => (string) $currentDate->year,
+                    'start_date' => $yearStart->toDateString(),
+                    'end_date' => $yearEnd->toDateString(),
+                    'total_budget' => $yearlyTotal,
+                    'total_spent' => $yearlySpent,
+                    'remaining' => $yearlyTotal - $yearlySpent,
+                    'percentage_used' => $yearlyTotal > 0 ? round(($yearlySpent / $yearlyTotal) * 100, 1) : 0,
+                    'budgets' => BudgetResource::collection($yearlyBudgets),
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Get spending velocity analysis
+     *
+     * @OA\Get(
+     *     path="/api/budgets/spending-velocity",
+     *     operationId="getSpendingVelocity",
+     *     tags={"Budgets"},
+     *     summary="Get spending velocity analysis",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"monthly", "quarterly", "yearly"})),
+     *     @OA\Response(response=200, description="Spending velocity data")
+     * )
+     */
+    public function spendingVelocity(Request $request): JsonResponse
+    {
+        $request->validate([
+            'period' => ['nullable', 'string', 'in:monthly,quarterly,yearly'],
+        ]);
+
+        $user = $request->user();
+        $period = $request->input('period', 'monthly');
+        $currentDate = Carbon::now();
+
+        // Get date range based on period
+        switch ($period) {
+            case 'quarterly':
+                $startDate = $currentDate->copy()->firstOfQuarter();
+                $endDate = $currentDate->copy()->lastOfQuarter();
+                break;
+            case 'yearly':
+                $startDate = $currentDate->copy()->startOfYear();
+                $endDate = $currentDate->copy()->endOfYear();
+                break;
+            default: // monthly
+                $startDate = $currentDate->copy()->startOfMonth();
+                $endDate = $currentDate->copy()->endOfMonth();
+        }
+
+        $totalDays = $startDate->diffInDays($endDate) + 1;
+        $daysPassed = $startDate->diffInDays($currentDate) + 1;
+        $daysRemaining = max(0, $currentDate->diffInDays($endDate));
+
+        // Get total budget and spending
+        $budgets = $user->budgets()->where('period', $period)->where('is_active', true)->get();
+        $totalBudget = $budgets->sum('amount');
+        $totalSpent = $this->budgetService->calculatePeriodSpending($user, $startDate, $currentDate);
+
+        // Calculate daily averages
+        $dailyAverage = $daysPassed > 0 ? $totalSpent / $daysPassed : 0;
+        $expectedDailySpend = $totalBudget / $totalDays;
+        $projectedMonthEnd = $dailyAverage * $totalDays;
+
+        // Determine spending rate
+        $spendingRate = $expectedDailySpend > 0 ? $dailyAverage / $expectedDailySpend : 0;
+
+        if ($spendingRate > 1.2) {
+            $currentRate = 'High';
+        } elseif ($spendingRate >= 0.8) {
+            $currentRate = 'Normal';
+        } else {
+            $currentRate = 'Low';
+        }
+
+        // Check if over budget
+        $overBudgetAmount = max(0, $projectedMonthEnd - $totalBudget);
+        $hasWarning = $overBudgetAmount > 0;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'current_rate' => $currentRate,
+                'rate_value' => round($spendingRate, 2),
+                'daily_average' => round($dailyAverage, 2),
+                'expected_daily_spend' => round($expectedDailySpend, 2),
+                'projected_month_end' => round($projectedMonthEnd, 2),
+                'days_remaining' => $daysRemaining,
+                'total_budget' => $totalBudget,
                 'total_spent' => $totalSpent,
-                'remaining' => $totalBudgeted - $totalSpent,
-                'percentage_used' => $totalBudgeted > 0 ? ($totalSpent / $totalBudgeted) * 100 : 0,
-                'budgets_count' => $budgets->count(),
-                'over_budget_count' => $budgetsWithSpending->filter(function ($budget) {
-                    return $budget->current_spent > $budget->amount;
-                })->count(),
-            ]
+                'warning' => $hasWarning ? [
+                    'message' => "At current rate, you'll exceed budget by $" . number_format($overBudgetAmount, 2),
+                    'amount' => $overBudgetAmount,
+                ] : null,
+            ],
+        ]);
+    }
+
+    /**
+     * Apply quick budget adjustment
+     *
+     * @OA\Post(
+     *     path="/api/budgets/quick-adjust",
+     *     operationId="quickAdjustBudgets",
+     *     tags={"Budgets"},
+     *     summary="Apply percentage adjustment to all budgets",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="percentage", type="number", example=5),
+     *             @OA\Property(property="period", type="string", enum={"monthly", "quarterly", "yearly"})
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Budgets adjusted successfully")
+     * )
+     */
+    public function quickAdjust(Request $request): JsonResponse
+    {
+        $request->validate([
+            'percentage' => ['required', 'numeric', 'between:-50,50'],
+            'period' => ['nullable', 'string', 'in:monthly,quarterly,yearly'],
+            'category_ids' => ['nullable', 'array'],
+            'category_ids.*' => ['integer', 'exists:categories,id'],
+        ]);
+
+        $user = $request->user();
+        $percentage = $request->input('percentage');
+        $period = $request->input('period');
+        $categoryIds = $request->input('category_ids', []);
+
+        $query = $user->budgets()->where('is_active', true);
+
+        if ($period) {
+            $query->where('period', $period);
+        }
+
+        if (!empty($categoryIds)) {
+            $query->whereIn('category_id', $categoryIds);
+        }
+
+        $budgets = $query->get();
+        $adjustedCount = 0;
+
+        foreach ($budgets as $budget) {
+            $multiplier = 1 + ($percentage / 100);
+            $newAmount = round($budget->amount * $multiplier, 2);
+            $budget->update(['amount' => $newAmount]);
+            $adjustedCount++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully adjusted {$adjustedCount} budgets by {$percentage}%",
+            'data' => [
+                'adjusted_count' => $adjustedCount,
+                'percentage' => $percentage,
+            ],
+        ]);
+    }
+
+    /**
+     * Get alert configuration
+     *
+     * @OA\Get(
+     *     path="/api/budgets/alerts/config",
+     *     operationId="getBudgetAlertConfig",
+     *     tags={"Budgets"},
+     *     summary="Get budget alert configuration",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Alert configuration")
+     * )
+     */
+    public function getAlertConfig(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Get alert settings from user settings or use defaults
+        $settings = $user->settings()->where('key', 'budget_alerts')->first();
+
+        $defaultConfig = [
+            'budget_warning' => [
+                'enabled' => true,
+                'threshold' => 75,
+                'email_notification' => true,
+                'push_notification' => true,
+            ],
+            'overspending_alert' => [
+                'enabled' => true,
+                'threshold' => 90,
+                'email_notification' => true,
+                'push_notification' => true,
+            ],
+            'budget_exceeded' => [
+                'enabled' => true,
+                'threshold' => 100,
+                'email_notification' => true,
+                'push_notification' => false,
+            ],
+        ];
+
+        $config = $settings ? json_decode($settings->value, true) : $defaultConfig;
+
+        return response()->json([
+            'success' => true,
+            'data' => $config,
+        ]);
+    }
+
+    /**
+     * Update alert configuration
+     *
+     * @OA\Put(
+     *     path="/api/budgets/alerts/config",
+     *     operationId="updateBudgetAlertConfig",
+     *     tags={"Budgets"},
+     *     summary="Update budget alert configuration",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="budget_warning", type="object"),
+     *             @OA\Property(property="overspending_alert", type="object"),
+     *             @OA\Property(property="budget_exceeded", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Alert configuration updated")
+     * )
+     */
+    public function updateAlertConfig(Request $request): JsonResponse
+    {
+        $request->validate([
+            'budget_warning' => ['nullable', 'array'],
+            'budget_warning.enabled' => ['nullable', 'boolean'],
+            'budget_warning.threshold' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'budget_warning.email_notification' => ['nullable', 'boolean'],
+            'budget_warning.push_notification' => ['nullable', 'boolean'],
+            'overspending_alert' => ['nullable', 'array'],
+            'overspending_alert.enabled' => ['nullable', 'boolean'],
+            'overspending_alert.threshold' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'overspending_alert.email_notification' => ['nullable', 'boolean'],
+            'overspending_alert.push_notification' => ['nullable', 'boolean'],
+            'budget_exceeded' => ['nullable', 'array'],
+            'budget_exceeded.enabled' => ['nullable', 'boolean'],
+            'budget_exceeded.threshold' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'budget_exceeded.email_notification' => ['nullable', 'boolean'],
+            'budget_exceeded.push_notification' => ['nullable', 'boolean'],
+        ]);
+
+        $user = $request->user();
+
+        $user->settings()->updateOrCreate(
+            ['key' => 'budget_alerts'],
+            ['value' => json_encode($request->only(['budget_warning', 'overspending_alert', 'budget_exceeded']))]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Alert configuration updated successfully',
+            'data' => $request->only(['budget_warning', 'overspending_alert', 'budget_exceeded']),
+        ]);
+    }
+
+    /**
+     * Get budget vs actual comparison
+     *
+     * @OA\Get(
+     *     path="/api/budgets/comparison",
+     *     operationId="getBudgetComparison",
+     *     tags={"Budgets"},
+     *     summary="Get budget vs actual comparison",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Budget comparison data")
+     * )
+     */
+    public function comparison(Request $request): JsonResponse
+    {
+        $request->validate([
+            'period' => ['nullable', 'string', 'in:monthly,quarterly,yearly'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:20'],
+        ]);
+
+        $user = $request->user();
+        $period = $request->input('period', 'monthly');
+        $limit = $request->input('limit', 6);
+        $currentDate = Carbon::now();
+
+        // Get date range based on period
+        switch ($period) {
+            case 'quarterly':
+                $startDate = $currentDate->copy()->firstOfQuarter();
+                $endDate = $currentDate->copy()->lastOfQuarter();
+                break;
+            case 'yearly':
+                $startDate = $currentDate->copy()->startOfYear();
+                $endDate = $currentDate->copy()->endOfYear();
+                break;
+            default: // monthly
+                $startDate = $currentDate->copy()->startOfMonth();
+                $endDate = $currentDate->copy()->endOfMonth();
+        }
+
+        // Get budgets with spending data
+        $budgets = $user->budgets()
+            ->where('period', $period)
+            ->where('is_active', true)
+            ->with('category')
+            ->take($limit)
+            ->get();
+
+        $comparisonData = $budgets->map(function ($budget) use ($startDate, $endDate) {
+            $spent = $this->budgetService->calculateCurrentSpent($budget, $startDate, $endDate);
+
+            return [
+                'category' => $budget->category ? $budget->category->name : $budget->name,
+                'category_icon' => $budget->category?->icon,
+                'category_color' => $budget->category?->color,
+                'budget' => $budget->amount,
+                'spent' => $spent,
+                'remaining' => $budget->amount - $spent,
+                'percentage' => $budget->amount > 0 ? round(($spent / $budget->amount) * 100, 1) : 0,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'period' => [
+                    'type' => $period,
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                ],
+                'comparison' => $comparisonData,
+            ],
+        ]);
+    }
+
+    /**
+     * Get category breakdown for budgets
+     *
+     * @OA\Get(
+     *     path="/api/budgets/category-breakdown",
+     *     operationId="getBudgetCategoryBreakdown",
+     *     tags={"Budgets"},
+     *     summary="Get budget breakdown by category",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Category breakdown data")
+     * )
+     */
+    public function categoryBreakdown(Request $request): JsonResponse
+    {
+        $request->validate([
+            'period' => ['nullable', 'string', 'in:monthly,quarterly,yearly'],
+        ]);
+
+        $user = $request->user();
+        $period = $request->input('period', 'monthly');
+        $currentDate = Carbon::now();
+
+        // Get date range
+        switch ($period) {
+            case 'quarterly':
+                $startDate = $currentDate->copy()->firstOfQuarter();
+                $endDate = $currentDate->copy()->lastOfQuarter();
+                break;
+            case 'yearly':
+                $startDate = $currentDate->copy()->startOfYear();
+                $endDate = $currentDate->copy()->endOfYear();
+                break;
+            default:
+                $startDate = $currentDate->copy()->startOfMonth();
+                $endDate = $currentDate->copy()->endOfMonth();
+        }
+
+        // Get budgets with category and transaction data
+        $budgets = $user->budgets()
+            ->where('period', $period)
+            ->where('is_active', true)
+            ->with(['category'])
+            ->get();
+
+        $breakdown = $budgets->map(function ($budget) use ($user, $startDate, $endDate) {
+            // Count transactions for this category
+            $transactionCount = $user->transactions()
+                ->where('category_id', $budget->category_id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->where('type', 'expense')
+                ->count();
+
+            $spent = $this->budgetService->calculateCurrentSpent($budget, $startDate, $endDate);
+            $remaining = $budget->amount - $spent;
+
+            return [
+                'id' => $budget->id,
+                'category_id' => $budget->category_id,
+                'name' => $budget->category ? $budget->category->name : $budget->name,
+                'icon' => $budget->category?->icon ?? 'category',
+                'color' => $budget->category?->color ?? '#2196F3',
+                'budget_amount' => $budget->amount,
+                'spent_amount' => $spent,
+                'remaining_amount' => $remaining,
+                'percentage' => $budget->amount > 0 ? round(($spent / $budget->amount) * 100, 1) : 0,
+                'transaction_count' => $transactionCount,
+                'status' => $spent > $budget->amount ? 'over_budget' : ($spent >= $budget->amount * 0.9 ? 'near_limit' : 'on_track'),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $breakdown,
         ]);
     }
 
     /**
      * Get budget analysis
-     *
-     * @OA\Get(
-     *     path="/api/budgets/{id}/analysis",
-     *     operationId="getBudgetAnalysis",
-     *     tags={"Budgets"},
-     *     summary="Get budget analysis",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"current", "previous", "comparison"})),
-     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Budget analysis data",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Budget not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
      */
     public function analysis(Request $request, Budget $budget): JsonResponse
     {
-        // Ensure budget belongs to authenticated user
         if ($budget->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
@@ -470,39 +717,9 @@ class BudgetController extends Controller
 
     /**
      * Reset budget for new period
-     *
-     * @OA\Post(
-     *     path="/api/budgets/{id}/reset",
-     *     operationId="resetBudget",
-     *     tags={"Budgets"},
-     *     summary="Reset budget for new period",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="start_date", type="string", format="date"),
-     *             @OA\Property(property="end_date", type="string", format="date"),
-     *             @OA\Property(property="carry_over_unused", type="boolean"),
-     *             @OA\Property(property="reset_spent", type="boolean", default=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Budget reset successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Budget")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Budget not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
      */
     public function reset(Request $request, Budget $budget): JsonResponse
     {
-        // Ensure budget belongs to authenticated user
         if ($budget->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
@@ -514,34 +731,65 @@ class BudgetController extends Controller
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after:start_date'],
             'carry_over_unused' => ['nullable', 'boolean'],
-            'reset_spent' => ['nullable', 'boolean', 'default:true'],
+            'reset_spent' => ['nullable', 'boolean'],
         ]);
 
-        try {
-            DB::beginTransaction();
+        $resetBudget = $this->budgetService->resetBudget(
+            $budget,
+            $request->start_date,
+            $request->end_date,
+            $request->boolean('carry_over_unused', false),
+            $request->boolean('reset_spent', true)
+        );
 
-            $resetBudget = $this->budgetService->resetBudget(
-                $budget,
-                $request->start_date,
-                $request->end_date,
-                $request->boolean('carry_over_unused', false),
-                $request->boolean('reset_spent', true)
+        return response()->json([
+            'success' => true,
+            'message' => 'Budget reset successfully',
+            'data' => new BudgetResource($resetBudget->load('category')),
+        ]);
+    }
+
+    /**
+     * Export budgets data
+     *
+     * @OA\Get(
+     *     path="/api/budgets/export",
+     *     operationId="exportBudgets",
+     *     tags={"Budgets"},
+     *     summary="Export budgets to CSV",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="CSV file download")
+     * )
+     */
+    public function export(Request $request)
+    {
+        $user = $request->user();
+        $budgets = $user->budgets()->with('category')->get();
+
+        $csvContent = "Category,Period,Budget Amount,Spent,Remaining,Percentage Used,Start Date,End Date,Status\n";
+
+        foreach ($budgets as $budget) {
+            $spent = $budget->spent ?? 0;
+            $remaining = $budget->amount - $spent;
+            $percentage = $budget->amount > 0 ? round(($spent / $budget->amount) * 100, 1) : 0;
+            $status = $budget->is_active ? 'Active' : 'Inactive';
+
+            $csvContent .= sprintf(
+                "%s,%s,%.2f,%.2f,%.2f,%.1f%%,%s,%s,%s\n",
+                $budget->category ? $budget->category->name : $budget->name,
+                ucfirst($budget->period),
+                $budget->amount,
+                $spent,
+                $remaining,
+                $percentage,
+                $budget->start_date,
+                $budget->end_date,
+                $status
             );
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Budget reset successfully',
-                'data' => new BudgetResource($resetBudget->fresh('category'))
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Budget reset failed: ' . $e->getMessage()
-            ], 500);
         }
+
+        return response($csvContent)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="budgets_export_' . now()->format('Y-m-d') . '.csv"');
     }
 }

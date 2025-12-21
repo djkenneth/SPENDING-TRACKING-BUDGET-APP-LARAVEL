@@ -154,6 +154,22 @@ Route::middleware('auth:sanctum')->prefix('transactions')->group(function () {
 */
 
 Route::middleware('auth:sanctum')->prefix('categories')->group(function () {
+    // Analytics and Reports
+    Route::get('/analytics/spending-analysis', [CategoryController::class, 'spendingAnalysis']); // GET /api/categories/analytics/spending-analysis
+    Route::get('/analytics/trends', [CategoryController::class, 'trends']); // GET /api/categories/analytics/trends
+    Route::get('/analytics/summary', [CategoryController::class, 'summary']); // GET /api/categoris/analytics/summary
+
+    // Utility Endpoints
+    Route::get('/meta/icons-and-colors', [CategoryController::class, 'getIconsAndColors']); // GET /api/categories/meta/icons-and-colors
+    Route::get('/meta/defaults', [CategoryController::class, 'getDefaults']); // GET /api/categories/meta/defaults
+    Route::post('/meta/create-defaults', [CategoryController::class, 'createDefaults']); // POST /api/categories/meta/create-defaults
+
+    // Bulk Operations
+    Route::put('/bulk/update', [CategoryController::class, 'bulkUpdate']); // PUT /api/categories/bulk/update
+    Route::put('/bulk/reorder', [CategoryController::class, 'reorder']); // PUT /api/categories/bulk/reorder
+    // Category Management
+    Route::post('/merge', [CategoryController::class, 'merge']); // POST /api/categories/merge
+
     // Basic CRUD Operations
     Route::get('/', [CategoryController::class, 'index']); // GET /api/categories
     Route::post('/', [CategoryController::class, 'store']); // POST /api/categories
@@ -163,22 +179,6 @@ Route::middleware('auth:sanctum')->prefix('categories')->group(function () {
 
     // Category Transactions
     Route::get('/{category}/transactions', [CategoryController::class, 'transactions']); // GET /api/categories/{id}/transactions
-
-    // Analytics and Reports
-    Route::get('/analytics/spending-analysis', [CategoryController::class, 'spendingAnalysis']); // GET /api/categories/analytics/spending-analysis
-    Route::get('/analytics/trends', [CategoryController::class, 'trends']); // GET /api/categories/analytics/trends
-
-    // Bulk Operations
-    Route::put('/bulk/update', [CategoryController::class, 'bulkUpdate']); // PUT /api/categories/bulk/update
-    Route::put('/bulk/reorder', [CategoryController::class, 'reorder']); // PUT /api/categories/bulk/reorder
-
-    // Category Management
-    Route::post('/merge', [CategoryController::class, 'merge']); // POST /api/categories/merge
-
-    // Utility Endpoints
-    Route::get('/meta/icons-and-colors', [CategoryController::class, 'getIconsAndColors']); // GET /api/categories/meta/icons-and-colors
-    Route::get('/meta/defaults', [CategoryController::class, 'getDefaults']); // GET /api/categories/meta/defaults
-    Route::post('/meta/create-defaults', [CategoryController::class, 'createDefaults']); // POST /api/categories/meta/create-defaults
 });
 
 /*
@@ -199,6 +199,25 @@ Route::middleware('auth:sanctum')->prefix('budgets')->group(function () {
     Route::get('/current/month', [BudgetController::class, 'current']); // GET /api/budgets/current/month
     Route::get('/{budget}/analysis', [BudgetController::class, 'analysis']); // GET /api/budgets/{id}/analysis
     Route::post('/{budget}/reset', [BudgetController::class, 'reset']); // POST /api/budgets/{id}/reset
+
+    // Spending Velocity Analysis
+    Route::get('/analytics/spending-velocity', [BudgetController::class, 'spendingVelocity']); // GET /api/budgets/analytics/spending-velocity
+
+    // Quick Budget Adjustments
+    Route::post('/bulk/quick-adjust', [BudgetController::class, 'quickAdjust']); // POST /api/budgets/bulk/quick-adjust
+
+    // Alert Configuration
+    Route::get('/alerts/config', [BudgetController::class, 'getAlertConfig']); // GET /api/budgets/alerts/config
+    Route::put('/alerts/config', [BudgetController::class, 'updateAlertConfig']); // PUT /api/budgets/alerts/config
+
+    // Budget vs Actual Comparison
+    Route::get('/analytics/comparison', [BudgetController::class, 'comparison']); // GET /api/budgets/analytics/comparison
+
+    // Category Breakdown
+    Route::get('/analytics/category-breakdown', [BudgetController::class, 'categoryBreakdown']); // GET /api/budgets/analytics/category-breakdown
+
+    // Export Budgets
+    Route::get('/export/csv', [BudgetController::class, 'export']); // GET /api/budgets/export/csv
 });
 
 /*

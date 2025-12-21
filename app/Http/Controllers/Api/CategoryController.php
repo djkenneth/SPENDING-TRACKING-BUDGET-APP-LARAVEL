@@ -6,49 +6,39 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Category\CreateCategoryRequest;
 use App\Http\Requests\Category\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
-use App\Http\Resources\CategoryTransactionResource;
 use App\Models\Category;
 use App\Services\CategoryService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class CategoryController extends Controller
 {
-    protected CategoryService $categoryService;
-
-    public function __construct(CategoryService $categoryService)
-    {
-        $this->categoryService = $categoryService;
-    }
+    public function __construct(
+        protected CategoryService $categoryService
+    ) {}
 
     /**
-     * Get all user categories
+     * Get all categories with hierarchical structure
      *
      * @OA\Get(
      *     path="/api/categories",
      *     operationId="getCategories",
      *     tags={"Categories"},
-     *     summary="Get all user categories",
+     *     summary="Get all categories",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string", enum={"income", "expense", "transfer"})),
+     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string", enum={"income", "expense", "both"})),
+     *     @OA\Parameter(name="parent_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="is_active", in="query", required=false, @OA\Schema(type="boolean")),
-     *     @OA\Parameter(name="include_inactive", in="query", required=false, @OA\Schema(type="boolean")),
-     *     @OA\Parameter(name="sort_by", in="query", required=false, @OA\Schema(type="string", enum={"name", "sort_order", "created_at"})),
-     *     @OA\Parameter(name="sort_direction", in="query", required=false, @OA\Schema(type="string", enum={"asc", "desc"})),
+     *     @OA\Parameter(name="with_budget", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="with_spending", in="query", required=false, @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="hierarchical", in="query", required=false, @OA\Schema(type="boolean")),
      *     @OA\Response(
      *         response=200,
-     *         description="Successful operation",
+     *         description="List of categories",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CategoryResource")),
-     *             @OA\Property(property="meta", type="object",
-     *                 @OA\Property(property="total", type="integer"),
-     *                 @OA\Property(property="by_type", type="object"),
-     *                 @OA\Property(property="active_count", type="integer"),
-     *                 @OA\Property(property="inactive_count", type="integer"),
-     *                 @OA\Property(property="statistics", type="object")
-     *             )
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Category"))
      *         )
      *     ),
      *     @OA\Response(response=401, description="Unauthenticated")
@@ -57,229 +47,256 @@ class CategoryController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'type' => ['nullable', 'string', 'in:income,expense,transfer'],
+            'type' => ['nullable', 'string', 'in:income,expense,both'],
+            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
             'is_active' => ['nullable', 'boolean'],
-            'include_inactive' => ['nullable', 'boolean'],
-            'sort_by' => ['nullable', 'string', 'in:name,sort_order,created_at'],
-            'sort_direction' => ['nullable', 'string', 'in:asc,desc'],
+            'with_budget' => ['nullable', 'boolean'],
+            'with_spending' => ['nullable', 'boolean'],
+            'hierarchical' => ['nullable', 'boolean'],
         ]);
 
-        $query = $request->user()->categories();
+        $user = $request->user();
+        $query = $user->categories();
 
         // Apply filters
-        if ($request->filled('type')) {
+        if ($request->filled('type') && $request->type !== 'both') {
             $query->where('type', $request->type);
+        }
+
+        if ($request->filled('parent_id')) {
+            $query->where('parent_id', $request->parent_id);
         }
 
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
-        } elseif (!$request->boolean('include_inactive')) {
-            $query->where('is_active', true);
         }
 
-        // Apply sorting
-        $sortBy = $request->input('sort_by', 'sort_order');
-        $sortDirection = $request->input('sort_direction', 'asc');
-        $query->orderBy($sortBy, $sortDirection);
+        // Load relationships
+        $query->with('children');
+
+        // Order by sort_order
+        $query->orderBy('sort_order')->orderBy('name');
 
         $categories = $query->get();
 
-        // Calculate category statistics
-        $statistics = $this->categoryService->getCategoriesStatistics($request->user());
+        // Add spending data if requested
+        if ($request->boolean('with_spending')) {
+            $currentMonth = Carbon::now();
+            $startOfMonth = $currentMonth->copy()->startOfMonth();
+            $endOfMonth = $currentMonth->copy()->endOfMonth();
+
+            $categories = $categories->map(function ($category) use ($user, $startOfMonth, $endOfMonth) {
+                $spent = $user->transactions()
+                    ->where('category_id', $category->id)
+                    ->where('type', 'expense')
+                    ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                    ->sum('amount');
+
+                $transactionCount = $user->transactions()
+                    ->where('category_id', $category->id)
+                    ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                    ->count();
+
+                $category->total_spent = $spent;
+                $category->transaction_count = $transactionCount;
+
+                // Calculate children spending
+                if ($category->children->count() > 0) {
+                    $childrenSpent = 0;
+                    $childrenTransactionCount = 0;
+
+                    foreach ($category->children as $child) {
+                        $childSpent = $user->transactions()
+                            ->where('category_id', $child->id)
+                            ->where('type', 'expense')
+                            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                            ->sum('amount');
+
+                        $childTransactionCount = $user->transactions()
+                            ->where('category_id', $child->id)
+                            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                            ->count();
+
+                        $child->total_spent = $childSpent;
+                        $child->transaction_count = $childTransactionCount;
+                        $childrenSpent += $childSpent;
+                        $childrenTransactionCount += $childTransactionCount;
+                    }
+
+                    // Include children spending in parent total
+                    $category->total_spent += $childrenSpent;
+                    $category->transaction_count += $childrenTransactionCount;
+                }
+
+                return $category;
+            });
+        }
+
+        // Build hierarchical structure if requested
+        if ($request->boolean('hierarchical')) {
+            $categories = $categories->whereNull('parent_id')->values();
+        }
 
         return response()->json([
             'success' => true,
             'data' => CategoryResource::collection($categories),
-            'meta' => [
-                'total' => $categories->count(),
-                'by_type' => $categories->groupBy('type')->map->count(),
-                'active_count' => $categories->where('is_active', true)->count(),
-                'inactive_count' => $categories->where('is_active', false)->count(),
-                'statistics' => $statistics,
-            ]
         ]);
     }
 
     /**
-     * Create a new category
-     *
-     * @OA\Post(
-     *     path="/api/categories",
-     *     operationId="createCategory",
-     *     tags={"Categories"},
-     *     summary="Create a new category",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/CreateCategoryRequest")
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Category created successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", ref="#/components/schemas/CategoryResource")
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="Bad Request"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=422, description="Validation Error")
-     * )
-     */
-    public function store(CreateCategoryRequest $request): JsonResponse
-    {
-        try {
-            DB::beginTransaction();
-
-            $category = $this->categoryService->createCategory($request->validated());
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Category created successfully',
-                'data' => new CategoryResource($category)
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Category creation failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get specific category
+     * Get categories summary with statistics
      *
      * @OA\Get(
-     *     path="/api/categories/{id}",
-     *     operationId="getCategory",
+     *     path="/api/categories/analytics/summary",
+     *     operationId="getCategoriesSummary",
      *     tags={"Categories"},
-     *     summary="Get specific category",
+     *     summary="Get categories summary with statistics",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful operation",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/CategoryResource")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Category not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
+     *     @OA\Response(response=200, description="Categories summary")
      * )
      */
-    public function show(Request $request, Category $category): JsonResponse
+    public function summary(Request $request): JsonResponse
     {
-        // Ensure category belongs to authenticated user
-        if ($category->user_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Category not found'
-            ], 404);
-        }
+        $user = $request->user();
+        $currentMonth = Carbon::now();
+        $startOfMonth = $currentMonth->copy()->startOfMonth();
+        $endOfMonth = $currentMonth->copy()->endOfMonth();
 
-        $categoryData = new CategoryResource($category);
-        $categoryStats = $this->categoryService->getCategoryStatistics($category);
+        // Get all categories
+        $categories = $user->categories()->with('children')->get();
+
+        // Calculate total budget (sum of all budget_amount from categories)
+        $totalBudget = $categories->sum('budget_amount');
+
+        // Calculate total spent this month
+        $totalSpent = $user->transactions()
+            ->where('type', 'expense')
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
+
+        // Count total transactions this month
+        $totalTransactions = $user->transactions()
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->count();
+
+        // Get hierarchical categories with spending
+        $hierarchicalCategories = $this->buildCategoryHierarchy($user, $categories, $startOfMonth, $endOfMonth);
 
         return response()->json([
             'success' => true,
-            'data' => array_merge($categoryData->toArray($request), [
-                'statistics' => $categoryStats
-            ])
+            'data' => [
+                'summary' => [
+                    'total_categories' => $categories->count(),
+                    'total_budget' => $totalBudget,
+                    'total_spent' => $totalSpent,
+                    'total_transactions' => $totalTransactions,
+                    'remaining' => $totalBudget - $totalSpent,
+                    'percentage_used' => $totalBudget > 0 ? round(($totalSpent / $totalBudget) * 100, 1) : 0,
+                ],
+                'categories' => $hierarchicalCategories,
+            ],
         ]);
     }
 
     /**
-     * Update category
-     *
-     * @OA\Put(
-     *     path="/api/categories/{id}",
-     *     operationId="updateCategory",
-     *     tags={"Categories"},
-     *     summary="Update category",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/UpdateCategoryRequest")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Category updated successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", ref="#/components/schemas/CategoryResource")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Category not found"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=422, description="Validation Error")
-     * )
+     * Build hierarchical category structure with spending data
      */
-    public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
+    private function buildCategoryHierarchy($user, $categories, $startOfMonth, $endOfMonth): array
     {
-        // Ensure category belongs to authenticated user
-        if ($category->user_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Category not found'
-            ], 404);
-        }
+        // Get root categories (no parent)
+        $rootCategories = $categories->whereNull('parent_id');
 
-        try {
-            DB::beginTransaction();
-
-            $updatedCategory = $this->categoryService->updateCategory($category, $request->validated());
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Category updated successfully',
-                'data' => new CategoryResource($updatedCategory->fresh())
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Category update failed: ' . $e->getMessage()
-            ], 500);
-        }
+        return $rootCategories->map(function ($category) use ($user, $categories, $startOfMonth, $endOfMonth) {
+            return $this->mapCategoryWithSpending($user, $category, $categories, $startOfMonth, $endOfMonth);
+        })->values()->toArray();
     }
 
     /**
-     * Delete category
-     *
-     * @OA\Delete(
-     *     path="/api/categories/{id}",
-     *     operationId="deleteCategory",
-     *     tags={"Categories"},
-     *     summary="Delete category",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Category deleted successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="Cannot delete category"),
-     *     @OA\Response(response=404, description="Category not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
+     * Map category with spending and children
      */
-    public function destroy(Request $request, Category $category): JsonResponse
+    private function mapCategoryWithSpending($user, $category, $allCategories, $startOfMonth, $endOfMonth): array
     {
-        // Ensure category belongs to authenticated user
+        // Calculate category spending
+        $spent = $user->transactions()
+            ->where('category_id', $category->id)
+            ->where('type', 'expense')
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
+
+        $transactionCount = $user->transactions()
+            ->where('category_id', $category->id)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->count();
+
+        // Get children
+        $children = $allCategories->where('parent_id', $category->id);
+        $childrenData = [];
+        $childrenSpent = 0;
+        $childrenTransactionCount = 0;
+
+        foreach ($children as $child) {
+            $childData = $this->mapCategoryWithSpending($user, $child, $allCategories, $startOfMonth, $endOfMonth);
+            $childrenData[] = $childData;
+            $childrenSpent += $childData['total_spent'];
+            $childrenTransactionCount += $childData['transaction_count'];
+        }
+
+        // Total spent includes children
+        $totalSpent = $spent + $childrenSpent;
+        $totalTransactionCount = $transactionCount + $childrenTransactionCount;
+
+        return [
+            'id' => $category->id,
+            'name' => $category->name,
+            'type' => $category->type,
+            'icon' => $category->icon,
+            'color' => $category->color,
+            'budget_amount' => $category->budget_amount ?? 0,
+            'total_spent' => $totalSpent,
+            'own_spent' => $spent,
+            'percentage' => ($category->budget_amount ?? 0) > 0
+                ? round(($totalSpent / $category->budget_amount) * 100, 1)
+                : 0,
+            'transaction_count' => $totalTransactionCount,
+            'own_transaction_count' => $transactionCount,
+            'remaining' => ($category->budget_amount ?? 0) - $totalSpent,
+            'is_active' => $category->is_active,
+            'parent_id' => $category->parent_id,
+            'children' => $childrenData,
+            'has_children' => count($childrenData) > 0,
+        ];
+    }
+
+    /**
+     * Store a newly created category
+     */
+    public function store(CreateCategoryRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $data['user_id'] = $request->user()->id;
+
+        // Set sort_order
+        if (!isset($data['sort_order'])) {
+            $maxOrder = $request->user()->categories()
+                ->where('parent_id', $data['parent_id'] ?? null)
+                ->max('sort_order');
+            $data['sort_order'] = ($maxOrder ?? 0) + 1;
+        }
+
+        $category = Category::create($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Category created successfully',
+            'data' => new CategoryResource($category->load('children', 'parent')),
+        ], 201);
+    }
+
+    /**
+     * Display the specified category
+     */
+    public function show(Request $request, Category $category): JsonResponse
+    {
         if ($category->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
@@ -287,69 +304,78 @@ class CategoryController extends Controller
             ], 404);
         }
 
-        // Check if category can be deleted
-        $canDelete = $this->categoryService->canDeleteCategory($category);
-        if (!$canDelete['can_delete']) {
+        return response()->json([
+            'success' => true,
+            'data' => new CategoryResource($category->load('children', 'parent')),
+        ]);
+    }
+
+    /**
+     * Update the specified category
+     */
+    public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
+    {
+        if ($category->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete category',
-                'errors' => $canDelete['reasons']
-            ], 400);
+                'message' => 'Category not found'
+            ], 404);
         }
 
-        try {
-            DB::beginTransaction();
+        $category->update($request->validated());
 
-            $this->categoryService->deleteCategory($category);
+        return response()->json([
+            'success' => true,
+            'message' => 'Category updated successfully',
+            'data' => new CategoryResource($category->fresh()->load('children', 'parent')),
+        ]);
+    }
 
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Category deleted successfully'
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
+    /**
+     * Remove the specified category
+     */
+    public function destroy(Request $request, Category $category): JsonResponse
+    {
+        if ($category->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Category deletion failed: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Category not found'
+            ], 404);
         }
+
+        // Check if category has children
+        if ($category->children()->count() > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete category with subcategories. Delete subcategories first or move them to another parent.',
+            ], 422);
+        }
+
+        // Check if category has transactions
+        $transactionCount = $request->user()->transactions()
+            ->where('category_id', $category->id)
+            ->count();
+
+        if ($transactionCount > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot delete category with {$transactionCount} associated transactions. Please reassign or delete transactions first.",
+            ], 422);
+        }
+
+        $category->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Category deleted successfully',
+        ]);
     }
 
     /**
      * Get category transactions
-     *
-     * @OA\Get(
-     *     path="/api/categories/{id}/transactions",
-     *     operationId="getCategoryTransactions",
-     *     tags={"Categories"},
-     *     summary="Get category transactions",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", minimum=1)),
-     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", minimum=1, maximum=100)),
-     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="account_id", in="query", required=false, @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string", enum={"income", "expense", "transfer"})),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Category transactions",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource")),
-     *             @OA\Property(property="meta", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Category not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
      */
     public function transactions(Request $request, Category $category): JsonResponse
     {
-        // Ensure category belongs to authenticated user
         if ($category->user_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
@@ -358,17 +384,15 @@ class CategoryController extends Controller
         }
 
         $request->validate([
-            'page' => ['nullable', 'integer', 'min:1'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'account_id' => ['nullable', 'integer', 'exists:accounts,id'],
-            'type' => ['nullable', 'string', 'in:income,expense,transfer'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $query = $category->transactions()->with(['account', 'transferAccount']);
+        $query = $request->user()->transactions()
+            ->where('category_id', $category->id)
+            ->with(['account']);
 
-        // Apply filters
         if ($request->filled('start_date')) {
             $query->where('date', '>=', $request->start_date);
         }
@@ -377,54 +401,23 @@ class CategoryController extends Controller
             $query->where('date', '<=', $request->end_date);
         }
 
-        if ($request->filled('account_id')) {
-            $query->where('account_id', $request->account_id);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        $perPage = $request->input('per_page', 20);
-        $transactions = $query->latest('date')->paginate($perPage);
+        $transactions = $query->orderBy('date', 'desc')
+            ->paginate($request->input('per_page', 25));
 
         return response()->json([
             'success' => true,
-            'data' => CategoryTransactionResource::collection($transactions->items()),
+            'data' => $transactions->items(),
             'meta' => [
                 'current_page' => $transactions->currentPage(),
                 'last_page' => $transactions->lastPage(),
                 'per_page' => $transactions->perPage(),
                 'total' => $transactions->total(),
-                'from' => $transactions->firstItem(),
-                'to' => $transactions->lastItem(),
-            ]
+            ],
         ]);
     }
 
     /**
      * Get spending analysis by category
-     *
-     * @OA\Get(
-     *     path="/api/categories/analytics/spending-analysis",
-     *     operationId="getCategorySpendingAnalysis",
-     *     tags={"Categories"},
-     *     summary="Get spending analysis by category",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"week", "month", "quarter", "year"})),
-     *     @OA\Parameter(name="start_date", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="end_date", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string", enum={"income", "expense"})),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Spending analysis data",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
      */
     public function spendingAnalysis(Request $request): JsonResponse
     {
@@ -435,384 +428,143 @@ class CategoryController extends Controller
             'type' => ['nullable', 'string', 'in:income,expense'],
         ]);
 
+        $user = $request->user();
         $period = $request->input('period', 'month');
         $type = $request->input('type', 'expense');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
 
         $analysis = $this->categoryService->getSpendingAnalysis(
-            $request->user(),
+            $user,
             $period,
             $type,
-            $startDate,
-            $endDate
+            $request->start_date,
+            $request->end_date
         );
 
         return response()->json([
             'success' => true,
-            'data' => $analysis
+            'data' => $analysis,
         ]);
     }
 
     /**
      * Get category trends
-     *
-     * @OA\Get(
-     *     path="/api/categories/analytics/trends",
-     *     operationId="getCategoryTrends",
-     *     tags={"Categories"},
-     *     summary="Get category trends",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"month", "quarter", "year"})),
-     *     @OA\Parameter(name="months", in="query", required=false, @OA\Schema(type="integer", minimum=1, maximum=24)),
-     *     @OA\Parameter(name="category_ids[]", in="query", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Category trends data",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
      */
     public function trends(Request $request): JsonResponse
     {
         $request->validate([
-            'period' => ['nullable', 'string', 'in:month,quarter,year'],
-            'months' => ['nullable', 'integer', 'min:1', 'max:24'],
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => ['integer', 'exists:categories,id'],
+            'period' => ['nullable', 'string', 'in:week,month,quarter,year'],
+            'interval' => ['nullable', 'string', 'in:day,week,month'],
         ]);
 
+        $user = $request->user();
+        $categoryIds = $request->input('category_ids', []);
         $period = $request->input('period', 'month');
-        $months = $request->input('months', 6);
-        $categoryIds = $request->input('category_ids');
+        $interval = $request->input('interval', 'day');
 
         $trends = $this->categoryService->getCategoryTrends(
-            $request->user(),
+            $user,
+            $categoryIds,
             $period,
-            $months,
-            $categoryIds
+            $interval
         );
 
         return response()->json([
             'success' => true,
-            'data' => $trends
+            'data' => $trends,
         ]);
     }
 
     /**
-     * Bulk update categories
-     *
-     * @OA\Put(
-     *     path="/api/categories/bulk/update",
-     *     operationId="bulkUpdateCategories",
-     *     tags={"Categories"},
-     *     summary="Bulk update categories",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="categories", type="array", @OA\Items(
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="name", type="string"),
-     *                 @OA\Property(property="color", type="string"),
-     *                 @OA\Property(property="icon", type="string"),
-     *                 @OA\Property(property="is_active", type="boolean"),
-     *                 @OA\Property(property="sort_order", type="integer")
-     *             ))
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Categories updated successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CategoryResource"))
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="Bad Request"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    public function bulkUpdate(Request $request): JsonResponse
-    {
-        $request->validate([
-            'categories' => ['required', 'array', 'min:1'],
-            'categories.*.id' => ['required', 'integer', 'exists:categories,id'],
-            'categories.*.name' => ['sometimes', 'string', 'max:255'],
-            'categories.*.color' => ['sometimes', 'string', 'regex:/^#[a-fA-F0-9]{6}$/'],
-            'categories.*.icon' => ['sometimes', 'string', 'max:50'],
-            'categories.*.is_active' => ['sometimes', 'boolean'],
-            'categories.*.sort_order' => ['sometimes', 'integer', 'min:0'],
-        ]);
-
-        $user = $request->user();
-        $updatedCategories = [];
-
-        try {
-            DB::beginTransaction();
-
-            foreach ($request->categories as $categoryData) {
-                $category = $user->categories()->find($categoryData['id']);
-
-                if (!$category) {
-                    continue;
-                }
-
-                $category->update(array_filter($categoryData, function ($key) {
-                    return $key !== 'id';
-                }, ARRAY_FILTER_USE_KEY));
-
-                $updatedCategories[] = new CategoryResource($category->fresh());
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Categories updated successfully',
-                'data' => $updatedCategories
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Bulk update failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Reorder categories
-     *
-     * @OA\Put(
-     *     path="/api/categories/bulk/reorder",
-     *     operationId="reorderCategories",
-     *     tags={"Categories"},
-     *     summary="Reorder categories",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="categories", type="array", @OA\Items(
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="sort_order", type="integer")
-     *             ))
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Categories reordered successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="Bad Request"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    public function reorder(Request $request): JsonResponse
-    {
-        $request->validate([
-            'categories' => ['required', 'array', 'min:1'],
-            'categories.*.id' => ['required', 'integer', 'exists:categories,id'],
-            'categories.*.sort_order' => ['required', 'integer', 'min:0'],
-        ]);
-
-        $user = $request->user();
-
-        try {
-            DB::beginTransaction();
-
-            foreach ($request->categories as $categoryData) {
-                $category = $user->categories()->find($categoryData['id']);
-
-                if ($category) {
-                    $category->update(['sort_order' => $categoryData['sort_order']]);
-                }
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Categories reordered successfully'
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Reorder failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get category icons and colors
-     *
-     * @OA\Get(
-     *     path="/api/categories/meta/icons-and-colors",
-     *     operationId="getCategoryIconsAndColors",
-     *     tags={"Categories"},
-     *     summary="Get available icons and colors",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Available icons and colors",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="icons", type="array", @OA\Items(type="string")),
-     *                 @OA\Property(property="colors", type="array", @OA\Items(type="string"))
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
+     * Get available icons and colors
      */
     public function getIconsAndColors(): JsonResponse
     {
-        $iconsAndColors = $this->categoryService->getAvailableIconsAndColors();
+        $icons = [
+            ['name' => 'shopping_cart', 'label' => 'Shopping Cart', 'category' => 'shopping'],
+            ['name' => 'home', 'label' => 'Home', 'category' => 'housing'],
+            ['name' => 'directions_car', 'label' => 'Car', 'category' => 'transportation'],
+            ['name' => 'restaurant', 'label' => 'Restaurant', 'category' => 'food'],
+            ['name' => 'favorite', 'label' => 'Heart', 'category' => 'healthcare'],
+            ['name' => 'work', 'label' => 'Briefcase', 'category' => 'business'],
+            ['name' => 'flight', 'label' => 'Flight', 'category' => 'travel'],
+            ['name' => 'local_grocery_store', 'label' => 'Groceries', 'category' => 'food'],
+            ['name' => 'movie', 'label' => 'Movie', 'category' => 'entertainment'],
+            ['name' => 'local_cafe', 'label' => 'Cafe', 'category' => 'food'],
+            ['name' => 'pets', 'label' => 'Pets', 'category' => 'pets'],
+            ['name' => 'smartphone', 'label' => 'Phone', 'category' => 'technology'],
+            ['name' => 'local_gas_station', 'label' => 'Gas Station', 'category' => 'transportation'],
+            ['name' => 'school', 'label' => 'Education', 'category' => 'education'],
+            ['name' => 'music_note', 'label' => 'Music', 'category' => 'entertainment'],
+            ['name' => 'fitness_center', 'label' => 'Fitness', 'category' => 'health'],
+            ['name' => 'checkroom', 'label' => 'Clothing', 'category' => 'shopping'],
+            ['name' => 'devices', 'label' => 'Electronics', 'category' => 'technology'],
+            ['name' => 'bolt', 'label' => 'Utilities', 'category' => 'utilities'],
+            ['name' => 'key', 'label' => 'Rent', 'category' => 'housing'],
+            ['name' => 'directions_bus', 'label' => 'Public Transit', 'category' => 'transportation'],
+            ['name' => 'local_hospital', 'label' => 'Hospital', 'category' => 'healthcare'],
+            ['name' => 'attach_money', 'label' => 'Money', 'category' => 'income'],
+            ['name' => 'account_balance', 'label' => 'Bank', 'category' => 'finance'],
+        ];
+
+        $colors = [
+            ['value' => '#3B82F6', 'label' => 'Blue'],
+            ['value' => '#EF4444', 'label' => 'Red'],
+            ['value' => '#10B981', 'label' => 'Green'],
+            ['value' => '#F97316', 'label' => 'Orange'],
+            ['value' => '#8B5CF6', 'label' => 'Purple'],
+            ['value' => '#EC4899', 'label' => 'Pink'],
+            ['value' => '#06B6D4', 'label' => 'Cyan'],
+            ['value' => '#84CC16', 'label' => 'Lime'],
+            ['value' => '#F59E0B', 'label' => 'Amber'],
+            ['value' => '#A855F7', 'label' => 'Violet'],
+        ];
 
         return response()->json([
             'success' => true,
-            'data' => $iconsAndColors
+            'data' => [
+                'icons' => $icons,
+                'colors' => $colors,
+            ],
         ]);
     }
 
     /**
-     * Merge categories
-     *
-     * @OA\Post(
-     *     path="/api/categories/merge",
-     *     operationId="mergeCategories",
-     *     tags={"Categories"},
-     *     summary="Merge categories",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="source_category_id", type="integer"),
-     *             @OA\Property(property="target_category_id", type="integer"),
-     *             @OA\Property(property="delete_source", type="boolean")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Categories merged successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Category not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    public function merge(Request $request): JsonResponse
-    {
-        $request->validate([
-            'source_category_id' => ['required', 'integer', 'exists:categories,id'],
-            'target_category_id' => ['required', 'integer', 'exists:categories,id', 'different:source_category_id'],
-            'delete_source' => ['nullable', 'boolean'],
-        ]);
-
-        $user = $request->user();
-        $sourceCategory = $user->categories()->find($request->source_category_id);
-        $targetCategory = $user->categories()->find($request->target_category_id);
-
-        if (!$sourceCategory || !$targetCategory) {
-            return response()->json([
-                'success' => false,
-                'message' => 'One or both categories not found'
-            ], 404);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $result = $this->categoryService->mergeCategories(
-                $sourceCategory,
-                $targetCategory,
-                $request->boolean('delete_source', false)
-            );
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Categories merged successfully',
-                'data' => $result
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Merge failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get default categories for new users
-     *
-     * @OA\Get(
-     *     path="/api/categories/meta/defaults",
-     *     operationId="getDefaultCategories",
-     *     tags={"Categories"},
-     *     summary="Get default categories for new users",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Default categories list",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
+     * Get default categories
      */
     public function getDefaults(): JsonResponse
     {
-        $defaults = $this->categoryService->getDefaultCategories();
+        $defaults = [
+            // Expense categories
+            ['name' => 'Food & Dining', 'type' => 'expense', 'icon' => 'restaurant', 'color' => '#F97316'],
+            ['name' => 'Groceries', 'type' => 'expense', 'icon' => 'local_grocery_store', 'color' => '#10B981', 'parent' => 'Food & Dining'],
+            ['name' => 'Restaurants', 'type' => 'expense', 'icon' => 'local_cafe', 'color' => '#EF4444', 'parent' => 'Food & Dining'],
+            ['name' => 'Transportation', 'type' => 'expense', 'icon' => 'directions_car', 'color' => '#3B82F6'],
+            ['name' => 'Gas & Fuel', 'type' => 'expense', 'icon' => 'local_gas_station', 'color' => '#10B981', 'parent' => 'Transportation'],
+            ['name' => 'Public Transit', 'type' => 'expense', 'icon' => 'directions_bus', 'color' => '#8B5CF6', 'parent' => 'Transportation'],
+            ['name' => 'Housing', 'type' => 'expense', 'icon' => 'home', 'color' => '#EF4444'],
+            ['name' => 'Rent', 'type' => 'expense', 'icon' => 'key', 'color' => '#F97316', 'parent' => 'Housing'],
+            ['name' => 'Utilities', 'type' => 'expense', 'icon' => 'bolt', 'color' => '#F59E0B', 'parent' => 'Housing'],
+            ['name' => 'Entertainment', 'type' => 'expense', 'icon' => 'movie', 'color' => '#10B981'],
+            ['name' => 'Healthcare', 'type' => 'expense', 'icon' => 'favorite', 'color' => '#EF4444'],
+            ['name' => 'Shopping', 'type' => 'expense', 'icon' => 'shopping_cart', 'color' => '#8B5CF6'],
+            ['name' => 'Clothing', 'type' => 'expense', 'icon' => 'checkroom', 'color' => '#EC4899', 'parent' => 'Shopping'],
+            ['name' => 'Electronics', 'type' => 'expense', 'icon' => 'devices', 'color' => '#3B82F6', 'parent' => 'Shopping'],
+            // Income categories
+            ['name' => 'Salary', 'type' => 'income', 'icon' => 'attach_money', 'color' => '#10B981'],
+            ['name' => 'Freelance', 'type' => 'income', 'icon' => 'work', 'color' => '#3B82F6'],
+            ['name' => 'Investments', 'type' => 'income', 'icon' => 'account_balance', 'color' => '#8B5CF6'],
+        ];
 
         return response()->json([
             'success' => true,
-            'data' => $defaults
+            'data' => $defaults,
         ]);
     }
 
     /**
      * Create default categories for user
-     *
-     * @OA\Post(
-     *     path="/api/categories/meta/create-defaults",
-     *     operationId="createDefaultCategories",
-     *     tags={"Categories"},
-     *     summary="Create default categories for user",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(
-     *         response=201,
-     *         description="Default categories created successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CategoryResource"))
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="User already has categories"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
      */
     public function createDefaults(Request $request): JsonResponse
     {
@@ -822,29 +574,156 @@ class CategoryController extends Controller
         if ($user->categories()->count() > 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'User already has categories'
-            ], 400);
+                'message' => 'User already has categories. Delete existing categories first or use merge.',
+            ], 422);
         }
 
-        try {
-            DB::beginTransaction();
+        $defaults = $this->getDefaults()->original['data'];
+        $createdCategories = [];
+        $parentMap = [];
 
-            $categories = $this->categoryService->createDefaultCategories($user);
+        // First pass: Create parent categories
+        foreach ($defaults as $default) {
+            if (!isset($default['parent'])) {
+                $category = Category::create([
+                    'user_id' => $user->id,
+                    'name' => $default['name'],
+                    'type' => $default['type'],
+                    'icon' => $default['icon'],
+                    'color' => $default['color'],
+                ]);
+                $parentMap[$default['name']] = $category->id;
+                $createdCategories[] = $category;
+            }
+        }
 
-            DB::commit();
+        // Second pass: Create child categories
+        foreach ($defaults as $default) {
+            if (isset($default['parent'])) {
+                $category = Category::create([
+                    'user_id' => $user->id,
+                    'name' => $default['name'],
+                    'type' => $default['type'],
+                    'icon' => $default['icon'],
+                    'color' => $default['color'],
+                    'parent_id' => $parentMap[$default['parent']] ?? null,
+                ]);
+                $createdCategories[] = $category;
+            }
+        }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Default categories created successfully',
-                'data' => CategoryResource::collection($categories)
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        return response()->json([
+            'success' => true,
+            'message' => count($createdCategories) . ' default categories created successfully',
+            'data' => CategoryResource::collection(collect($createdCategories)),
+        ], 201);
+    }
 
+    /**
+     * Bulk update categories
+     */
+    public function bulkUpdate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'categories' => ['required', 'array'],
+            'categories.*.id' => ['required', 'integer', 'exists:categories,id'],
+            'categories.*.name' => ['nullable', 'string', 'max:255'],
+            'categories.*.icon' => ['nullable', 'string'],
+            'categories.*.color' => ['nullable', 'string'],
+            'categories.*.budget_amount' => ['nullable', 'numeric', 'min:0'],
+            'categories.*.is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $user = $request->user();
+        $updatedCount = 0;
+
+        foreach ($request->categories as $categoryData) {
+            $category = Category::where('id', $categoryData['id'])
+                ->where('user_id', $user->id)
+                ->first();
+
+            if ($category) {
+                $category->update(array_filter($categoryData, function ($key) {
+                    return $key !== 'id';
+                }, ARRAY_FILTER_USE_KEY));
+                $updatedCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$updatedCount} categories updated successfully",
+        ]);
+    }
+
+    /**
+     * Reorder categories
+     */
+    public function reorder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'order' => ['required', 'array'],
+            'order.*.id' => ['required', 'integer', 'exists:categories,id'],
+            'order.*.sort_order' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $user = $request->user();
+
+        foreach ($request->order as $item) {
+            Category::where('id', $item['id'])
+                ->where('user_id', $user->id)
+                ->update(['sort_order' => $item['sort_order']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categories reordered successfully',
+        ]);
+    }
+
+    /**
+     * Merge categories
+     */
+    public function merge(Request $request): JsonResponse
+    {
+        $request->validate([
+            'source_id' => ['required', 'integer', 'exists:categories,id'],
+            'target_id' => ['required', 'integer', 'exists:categories,id', 'different:source_id'],
+        ]);
+
+        $user = $request->user();
+
+        $source = Category::where('id', $request->source_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        $target = Category::where('id', $request->target_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$source || !$target) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create default categories: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Category not found',
+            ], 404);
         }
+
+        // Move all transactions from source to target
+        $user->transactions()
+            ->where('category_id', $source->id)
+            ->update(['category_id' => $target->id]);
+
+        // Move children categories
+        Category::where('parent_id', $source->id)
+            ->where('user_id', $user->id)
+            ->update(['parent_id' => $target->id]);
+
+        // Delete source category
+        $source->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Category '{$source->name}' merged into '{$target->name}' successfully",
+        ]);
     }
 }
