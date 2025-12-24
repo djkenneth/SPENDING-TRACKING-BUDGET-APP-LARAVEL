@@ -93,7 +93,7 @@ class FinancialGoalController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         } elseif (!$request->boolean('include_completed')) {
-            $query->whereIn('status', ['active', 'paused']);
+            $query->whereIn('status', ['active', 'paused', 'completed']);
         }
 
         // Filter by priority
@@ -179,7 +179,7 @@ class FinancialGoalController extends Controller
     public function store(CreateFinancialGoalRequest $request): JsonResponse
     {
         try {
-            DB::beginTransaction();
+            // DB::beginTransaction();
 
             $goalData = $request->validated();
 
@@ -201,7 +201,7 @@ class FinancialGoalController extends Controller
 
             $goal = $request->user()->financialGoals()->create($goalData);
 
-            DB::commit();
+            // DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -209,7 +209,7 @@ class FinancialGoalController extends Controller
                 'data' => new FinancialGoalResource($goal)
             ], 201);
         } catch (\Exception $e) {
-            DB::rollBack();
+            // DB::rollBack();
 
             return response()->json([
                 'success' => false,

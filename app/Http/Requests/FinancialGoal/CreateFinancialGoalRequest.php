@@ -25,7 +25,7 @@ class CreateFinancialGoalRequest extends FormRequest
             'target_amount' => ['required', 'numeric', 'min:0.01', 'max:999999999.99'],
             'target_date' => ['required', 'date', 'after:today'],
             'priority' => ['required', 'string', 'in:high,medium,low'],
-            'status' => ['sometimes', 'string', 'in:active,paused'],
+            'status' => ['sometimes', 'string', 'in:active,,completed'],
             'color' => ['sometimes', 'string', 'regex:/^#[a-fA-F0-9]{6}$/'],
             'icon' => ['sometimes', 'string', 'max:50'],
             'monthly_target' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
