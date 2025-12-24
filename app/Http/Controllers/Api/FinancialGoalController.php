@@ -93,7 +93,7 @@ class FinancialGoalController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         } elseif (!$request->boolean('include_completed')) {
-            $query->whereIn('status', ['active', 'paused', 'completed']);
+            $query->whereIn('status', ['active', 'paused', 'completed', 'cancelled']);
         }
 
         // Filter by priority
