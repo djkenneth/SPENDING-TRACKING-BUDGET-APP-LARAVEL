@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Bill;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class MarkAsPaidRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class MarkAsPaidRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->route('bill')->user_id === auth()->id();
+        return $this->route('bill')->user_id === Auth::id();
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryService
 {
@@ -15,7 +16,7 @@ class CategoryService
      */
     public function createCategory(array $data): Category
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         return $user->categories()->create([
             'name' => $data['name'],

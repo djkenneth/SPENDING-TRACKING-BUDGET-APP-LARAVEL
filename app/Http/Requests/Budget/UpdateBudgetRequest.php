@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Budget;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UpdateBudgetRequest extends FormRequest
@@ -12,7 +13,7 @@ class UpdateBudgetRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->route('budget')->user_id === auth()->id();
+        return $this->route('budget')->user_id === Auth::id();
     }
 
     /**
@@ -25,7 +26,7 @@ class UpdateBudgetRequest extends FormRequest
                 'sometimes',
                 'integer',
                 Rule::exists('categories', 'id')->where(function ($query) {
-                    return $query->where('user_id', auth()->id());
+                    return $query->where('user_id', Auth::id());
                 }),
             ],
             'name' => ['sometimes', 'string', 'max:255'],
@@ -91,7 +92,7 @@ class UpdateBudgetRequest extends FormRequest
                 $endDate = $this->input('end_date', $budget->end_date);
 
                 if (!$validator->errors()->has('category_id') && !$validator->errors()->has('start_date') && !$validator->errors()->has('end_date')) {
-                    $overlappingBudget = auth()->user()->budgets()
+                    $overlappingBudget = Auth::user()->budgets()
                         ->where('id', '!=', $budget->id)
                         ->where('category_id', $categoryId)
                         ->where('is_active', true)

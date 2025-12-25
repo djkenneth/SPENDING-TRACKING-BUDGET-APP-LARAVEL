@@ -26,7 +26,7 @@ class CreateBudgetRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('categories', 'id')->where(function ($query) {
-                    return $query->where('user_id', auth()->id());
+                    return $query->where('user_id', Auth::id());
                 }),
             ],
             'name' => ['required', 'string', 'max:255'],

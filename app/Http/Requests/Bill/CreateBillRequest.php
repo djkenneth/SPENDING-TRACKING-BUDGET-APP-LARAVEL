@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Bill;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class CreateBillRequest extends FormRequest
@@ -25,7 +26,7 @@ class CreateBillRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('categories', 'id')->where(function ($query) {
-                    return $query->where('user_id', auth()->id());
+                    return $query->where('user_id', Auth::id());
                 }),
             ],
             'name' => ['required', 'string', 'max:255'],

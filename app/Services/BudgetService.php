@@ -6,6 +6,7 @@ use App\Models\Budget;
 use App\Models\User;
 use App\Models\Transaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BudgetService
@@ -16,7 +17,7 @@ class BudgetService
     public function createBudget(array $data): Budget
     {
         $budget = Budget::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'category_id' => $data['category_id'],
             'name' => $data['name'],
             'amount' => $data['amount'],

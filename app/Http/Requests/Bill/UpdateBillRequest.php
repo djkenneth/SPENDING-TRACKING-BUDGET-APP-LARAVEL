@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Bill;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UpdateBillRequest extends FormRequest
@@ -12,7 +13,7 @@ class UpdateBillRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->route('bill')->user_id === auth()->id();
+        return $this->route('bill')->user_id === Auth::id();
     }
 
     /**
@@ -25,7 +26,7 @@ class UpdateBillRequest extends FormRequest
                 'sometimes',
                 'integer',
                 Rule::exists('categories', 'id')->where(function ($query) {
-                    return $query->where('user_id', auth()->id());
+                    return $query->where('user_id', Auth::id());
                 }),
             ],
             'name' => ['sometimes', 'string', 'max:255'],
