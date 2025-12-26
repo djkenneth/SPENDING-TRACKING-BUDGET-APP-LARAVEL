@@ -17,6 +17,7 @@
         "laravel/tinker": "^2.10.1",
         "league/csv": "^9.24",
         "phpoffice/phpspreadsheet": "^5.0",
+        "tightenco/ziggy": "^2.6",
         "zircote/swagger-php": "^5.3"
     },
     "require-dev": {
