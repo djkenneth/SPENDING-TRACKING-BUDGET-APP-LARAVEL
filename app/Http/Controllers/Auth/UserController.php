@@ -5,13 +5,18 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules;
+use Inertia\Inertia;
+use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class UserController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): Response
     {
-        $perPage = $request->input('per_page', 15);
         $search = $request->input('search');
+        $perPage = $request->input('per_page', 15);
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
 
@@ -21,7 +26,7 @@ class UserController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -31,42 +36,36 @@ class UserController extends Controller
         // Pagination
         $users = $query->paginate($perPage);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'users' => UserResource::collection($users->items()),
-                'pagination' => [
-                    'current_page' => $users->currentPage(),
-                    'per_page' => $users->perPage(),
-                    'total' => $users->total(),
-                    'last_page' => $users->lastPage(),
-                    'from' => $users->firstItem(),
-                    'to' => $users->lastItem(),
-                ]
-            ]
+        return Inertia::render('Users', [
+            'users' => $users,
+            'filters' => [
+                'search' => $search,
+                'sort_by' => $sortBy,
+                'sort_order' => $sortOrder,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
-    public function show(User $user): JsonResponse
+    public function show(User $user): Response
     {
-        return response()->json([
-            'success' => true,
-            'data' => new UserResource($user)
+        return Inertia::render('Users/Show', [
+            'user' => $user,
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'currency' => ['nullable', 'string', 'max:3'],
             'timezone' => ['nullable', 'string', 'max:50'],
             'language' => ['nullable', 'string', 'max:10'],
         ]);
 
-        $user = User::create([
+        User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -76,68 +75,96 @@ class UserController extends Controller
             'preferences' => [],
         ]);
 
-        // Create default categories and account
-        $this->createDefaultCategories($user);
-        $this->createDefaultAccount($user);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully',
-            'data' => new UserResource($user)
-        ], 201);
+        return redirect()->route('users.index')
+            ->with('success', 'User created successfully.');
     }
 
-    public function update(Request $request, User $user): JsonResponse
+    /**
+     * Show the form for editing the specified user
+     */
+    public function edit(User $user): Response
+    {
+        return Inertia::render('Users/Edit', [
+            'user' => $user,
+        ]);
+    }
+
+    public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'password' => ['sometimes', 'string', 'min:8'],
+            'password' => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()],
             'currency' => ['sometimes', 'string', 'max:3'],
             'timezone' => ['sometimes', 'string', 'max:50'],
             'language' => ['sometimes', 'string', 'max:10'],
         ]);
 
         // Update password if provided
-        if (isset($validated['password'])) {
+        if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
         }
 
         $user->update($validated);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User updated successfully',
-            'data' => new UserResource($user->fresh())
-        ]);
+        return redirect()->route('users.index')
+            ->with('success', 'User updated successfully.');
     }
 
-    public function destroy(Request $request, User $user): JsonResponse
+    /**
+     * Remove the specified user
+     */
+    public function destroy(Request $request, User $user): RedirectResponse
     {
         // Prevent self-deletion
         if ($request->user()->id === $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You cannot delete your own account'
-            ], 400);
+            return redirect()->route('users.index')
+                ->with('error', 'You cannot delete your own account.');
         }
 
-        try {
-            // Delete all user tokens
+        // Delete all user tokens
+        $user->tokens()->delete();
+
+        // Soft delete the user
+        $user->delete();
+
+        return redirect()->route('users.index')
+            ->with('success', 'User deleted successfully.');
+    }
+
+    /**
+     * Bulk delete users
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'user_ids' => ['required', 'array'],
+            'user_ids.*' => ['integer', 'exists:users,id']
+        ]);
+
+        $currentUserId = $request->user()->id;
+
+        // Prevent deleting current user
+        $userIds = array_filter($validated['user_ids'], function($id) use ($currentUserId) {
+            return $id !== $currentUserId;
+        });
+
+        if (empty($userIds)) {
+            return redirect()->route('users.index')
+                ->with('error', 'Cannot delete your own account.');
+        }
+
+        // Delete tokens for all users
+        User::whereIn('id', $userIds)->each(function($user) {
             $user->tokens()->delete();
+        });
 
-            // Soft delete the user
-            $user->delete();
+        // Soft delete users
+        User::whereIn('id', $userIds)->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'User deleted successfully'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete user: ' . $e->getMessage()
-            ], 500);
-        }
+        return redirect()->route('users.index')
+            ->with('success', count($userIds) . ' user(s) deleted successfully.');
     }
 }

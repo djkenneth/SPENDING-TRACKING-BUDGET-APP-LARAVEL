@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-
+import { Toaster } from '@/components/ui/toaster';
 interface AuthLayoutProps {
   children: ReactNode;
 }
@@ -17,6 +17,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           </p>
         </div>
         {children}
+        <Toaster />
       </div>
     </div>
   );
