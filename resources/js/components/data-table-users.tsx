@@ -175,10 +175,16 @@ export function DataTable({
             cell: ({ row }) => (
                 <div className="flex flex-col">
                     <span className="font-medium">{row.original.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                        {row.original.email}
-                    </span>
                 </div>
+            ),
+        },
+        {
+            accessorKey: 'email',
+            header: 'Email',
+            cell: ({ row }) => (
+                <span className="text-sm text-muted-foreground">
+                    {row.original.email}
+                </span>
             ),
         },
         {
@@ -196,6 +202,15 @@ export function DataTable({
             cell: ({ row }) => (
                 <span className="text-sm text-muted-foreground">
                     {row.original.timezone}
+                </span>
+            ),
+        },
+        {
+            accessorKey: 'language',
+            header: 'Language',
+            cell: ({ row }) => (
+                <span className="text-sm text-muted-foreground">
+                    {row.original.language}
                 </span>
             ),
         },
