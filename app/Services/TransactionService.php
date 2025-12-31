@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\RecurringTransaction;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Account;
@@ -544,13 +545,206 @@ class TransactionService
     }
 
     /**
-     * Create recurring transactions
+     * Create recurring transaction template from a transaction
+     *
+     * This method creates an entry in the recurring_transactions table
+     * which serves as a template for generating future transactions.
+     * A scheduled job/command can then use this table to automatically
+     * create transactions when they're due.
      */
-    private function createRecurringTransactions(Transaction $transaction): void
+    private function createRecurringTransactions(Transaction $transaction): RecurringTransaction
     {
-        // This would create a recurring transaction template
-        // Implementation depends on how you want to handle recurring transactions
-        // For now, we'll just create the initial transaction
+        $user = Auth::user();
+
+        // Calculate next occurrence based on the transaction date and frequency
+        $nextOccurrence = $this->calculateNextOccurrenceDate(
+            $transaction->date,
+            $transaction->recurring_type,
+            $transaction->recurring_interval ?? 1
+        );
+
+        // Calculate max occurrences if end date is provided
+        $maxOccurrences = null;
+        if ($transaction->recurring_end_date) {
+            $maxOccurrences = $this->calculateMaxOccurrences(
+                $transaction->date,
+                $transaction->recurring_end_date,
+                $transaction->recurring_type,
+                $transaction->recurring_interval ?? 1
+            );
+        }
+
+        // Create the recurring transaction template
+        $recurringTransaction = RecurringTransaction::create([
+            'user_id' => $user->id,
+            'account_id' => $transaction->account_id,
+            'category_id' => $transaction->category_id,
+            'name' => $transaction->description, // Use description as name
+            'description' => $transaction->description,
+            'amount' => $transaction->amount,
+            'type' => $transaction->type,
+            'frequency' => $transaction->recurring_type,
+            'interval' => $transaction->recurring_interval ?? 1,
+            'start_date' => $transaction->date,
+            'end_date' => $transaction->recurring_end_date,
+            'next_occurrence' => $nextOccurrence,
+            'is_active' => true,
+            'occurrences_count' => 1, // First transaction already created
+            'max_occurrences' => $maxOccurrences,
+        ]);
+
+        return $recurringTransaction;
+    }
+
+
+    /**
+     * Calculate the next occurrence date based on frequency and interval
+     */
+    private function calculateNextOccurrenceDate(
+        Carbon|string $fromDate,
+        string $frequency,
+        int $interval = 1
+    ): Carbon {
+        $date = $fromDate instanceof Carbon ? $fromDate->copy() : Carbon::parse($fromDate);
+
+        return match ($frequency) {
+            'weekly' => $date->addWeeks($interval),
+            'monthly' => $date->addMonths($interval),
+            'quarterly' => $date->addMonths($interval * 3),
+            'yearly' => $date->addYears($interval),
+            default => $date->addMonths($interval),
+        };
+    }
+
+
+    /**
+     * Calculate maximum number of occurrences between start and end date
+     */
+    private function calculateMaxOccurrences(
+        Carbon|string $startDate,
+        Carbon|string $endDate,
+        string $frequency,
+        int $interval = 1
+    ): int {
+        $start = $startDate instanceof Carbon ? $startDate->copy() : Carbon::parse($startDate);
+        $end = $endDate instanceof Carbon ? $endDate->copy() : Carbon::parse($endDate);
+
+        $occurrences = 1; // Include the first transaction
+        $current = $start->copy();
+
+        while (true) {
+            $current = $this->calculateNextOccurrenceDate($current, $frequency, $interval);
+
+            if ($current->isAfter($end)) {
+                break;
+            }
+
+            $occurrences++;
+
+            // Safety limit to prevent infinite loops
+            if ($occurrences > 1000) {
+                break;
+            }
+        }
+
+        return $occurrences;
+    }
+
+    /**
+     * Process due recurring transactions and create actual transactions
+     * This method should be called by a scheduled command (e.g., daily)
+     */
+    public function processDueRecurringTransactions(): array
+    {
+        $processedCount = 0;
+        $errors = [];
+
+        $dueRecurringTransactions = RecurringTransaction::where('is_active', true)
+            ->where('next_occurrence', '<=', now()->toDateString())
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now()->toDateString());
+            })
+            ->where(function ($query) {
+                $query->whereNull('max_occurrences')
+                    ->orWhereRaw('occurrences_count < max_occurrences');
+            })
+            ->get();
+
+        foreach ($dueRecurringTransactions as $recurring) {
+            try {
+                DB::beginTransaction();
+
+                // Create the transaction
+                $transaction = $recurring->user->transactions()->create([
+                    'account_id' => $recurring->account_id,
+                    'category_id' => $recurring->category_id,
+                    'description' => $recurring->description,
+                    'amount' => $recurring->amount,
+                    'type' => $recurring->type,
+                    'date' => $recurring->next_occurrence,
+                    'is_recurring' => true,
+                    'recurring_type' => $recurring->frequency,
+                    'recurring_interval' => $recurring->interval,
+                    'recurring_end_date' => $recurring->end_date,
+                    'is_cleared' => false, // Auto-generated transactions start as uncleared
+                ]);
+
+                // Update account balances
+                $this->updateAccountBalances($transaction);
+
+                // Update budget spending
+                $this->updateBudgetSpending($transaction);
+
+                // Update the recurring transaction template
+                $recurring->update([
+                    'next_occurrence' => $this->calculateNextOccurrenceDate(
+                        $recurring->next_occurrence,
+                        $recurring->frequency,
+                        $recurring->interval
+                    ),
+                    'occurrences_count' => $recurring->occurrences_count + 1,
+                ]);
+
+                // Deactivate if max occurrences reached or past end date
+                if ($this->shouldDeactivateRecurring($recurring)) {
+                    $recurring->update(['is_active' => false]);
+                }
+
+                DB::commit();
+                $processedCount++;
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $errors[] = [
+                    'recurring_id' => $recurring->id,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return [
+            'processed' => $processedCount,
+            'errors' => $errors,
+        ];
+    }
+
+    /**
+     * Check if a recurring transaction should be deactivated
+     */
+    private function shouldDeactivateRecurring(RecurringTransaction $recurring): bool
+    {
+        // Check if max occurrences reached
+        if ($recurring->max_occurrences && $recurring->occurrences_count >= $recurring->max_occurrences) {
+            return true;
+        }
+
+        // Check if next occurrence is past end date
+        if ($recurring->end_date && $recurring->next_occurrence->isAfter($recurring->end_date)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
