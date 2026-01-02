@@ -21,8 +21,8 @@ Artisan::command('inspire', function () {
 
 // Process recurring transactions daily at 1:00 AM
 Schedule::command('transactions:process-recurring')
-    // ->dailyAt('01:00')
-    ->everyMinute()
+    ->dailyAt('01:00')
+    // ->everyMinute()
     ->withoutOverlapping()
     ->runInBackground()
     ->onSuccess(function () {
