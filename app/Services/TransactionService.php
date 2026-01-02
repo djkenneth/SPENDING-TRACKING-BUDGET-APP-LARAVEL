@@ -651,6 +651,33 @@ class TransactionService
     }
 
     /**
+     * Get due recurring transactions (for dry-run or preview)
+     *
+     * @param int|null $userId Optional user ID to filter by
+     * @return Collection
+     */
+    public function getDueRecurringTransactions(?int $userId = null): Collection
+    {
+        $query = RecurringTransaction::where('is_active', true)
+            ->where('next_occurrence', '<=', now()->toDateString())
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now()->toDateString());
+            })
+            ->where(function ($query) {
+                $query->whereNull('max_occurrences')
+                    ->orWhereRaw('occurrences_count < max_occurrences');
+            })
+            ->with(['user', 'account', 'category']);
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        return $query->get();
+    }
+
+    /**
      * Process due recurring transactions and create actual transactions
      * This method should be called by a scheduled command (e.g., daily)
      */
@@ -727,6 +754,39 @@ class TransactionService
             'processed' => $processedCount,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Update account balances for recurring transaction (without Auth context)
+     */
+    private function updateAccountBalancesForRecurring(Transaction $transaction, User $user): void
+    {
+        $account = Account::find($transaction->account_id);
+
+        if (!$account || $account->user_id !== $user->id) {
+            return;
+        }
+
+        switch ($transaction->type) {
+            case 'income':
+                $account->increment('balance', $transaction->amount);
+                break;
+            case 'expense':
+                $account->decrement('balance', $transaction->amount);
+                break;
+            case 'transfer':
+                $account->decrement('balance', $transaction->amount);
+                if ($transaction->transfer_account_id) {
+                    $transferAccount = Account::find($transaction->transfer_account_id);
+                    if ($transferAccount && $transferAccount->user_id === $user->id) {
+                        $transferAccount->increment('balance', $transaction->amount);
+                        $this->recordAccountBalanceHistory($transferAccount, $transaction);
+                    }
+                }
+                break;
+        }
+
+        $this->recordAccountBalanceHistory($account, $transaction);
     }
 
     /**
